@@ -1,0 +1,51 @@
+<header>
+  <button class="delete-button" (click)="deleteTask()">削除</button>
+</header>
+<body>
+<div class="task-detail-container">
+  <form [formGroup]="task_detail_form" (ngSubmit)="taskEdit()" >
+    <label>課題名称</label>
+    <input type="text" placeholder="50文字以内" formControlName="title">
+    <label>詳細な内容</label>
+    <textarea placeholder="500文字以内" formControlName="description"></textarea>
+    <div>{{descLength$ | async}}/500</div>
+    <label>期限</label>
+    <input type="date" formControlName="dueDate">
+    <label>優先度</label>
+    <select formControlName="priority">
+      <option value="緊急">緊急</option>
+      <option value="高">高</option>
+      <option value="中">中</option>
+      <option value="低">低</option>
+      <option value="無期">無期</option>
+    </select>
+    <label>ステータス</label>
+    <select formControlName="status">
+      <option value="未対応">未対応</option>
+      <option value="対応中">対応中</option>
+      <option value="苦戦中">苦戦中</option>
+      <option value="保留">保留</option>
+      <option value="完了">完了</option>
+    </select>
+    <label>担当者</label>
+    <select formControlName="assignedid">
+      <option value="">指定なし</option>
+      <ng-container *ngIf="vm$ | async as vm"> 
+      <option *ngFor="let m of vm.members; trackBy: trackByMemberUserId" [value]="m.userid">
+        {{ m.displayname || m.userid }}
+      </option>
+      </ng-container>
+    </select>
+    <label>対応方法</label>
+    <textarea placeholder="100文字以内" formControlName="approach"></textarea>
+    <div>{{apLength$ | async}}/100</div>
+    <label>完了条件</label>
+    <textarea placeholder="100文字以内" formControlName="completioncriteria"></textarea>
+    <div>{{compLength$ | async}}/100</div>
+    <div class="button-container">
+    <button type="submit" [disabled]="task_detail_form.invalid">保存</button>
+    <button type="button" (click)="onCancel()">キャンセル</button>
+    </div>
+  </form>
+</div>
+</body>

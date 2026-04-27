@@ -1,0 +1,63 @@
+<h1>新規登録</h1>
+
+<span class="signin-link">
+ログインは<a [routerLink]="['/signin']">こちら</a>
+</span>
+
+<form [formGroup]="signupForm" (ngSubmit)="signup()">
+
+  <label>ユーザー名</label>
+  <input type="text" formControlName="username">
+  <div *ngIf="username.touched && username.errors">
+    <div *ngIf="username.errors?.['required']">
+      ユーザー名は1文字以上入力してください（空白のみは不可）
+    </div>
+    <div *ngIf="!username.errors?.['required'] && username.errors?.['maxlength']">
+      30文字以内で入力してください
+    </div>
+  </div>
+  <!-- <div *ngIf="isUsernameTaken(usernameValue)">
+    このユーザー名は既に使用されています
+  </div> -->
+  <div *ngIf="errorMessage">{{ errorMessage }}</div>
+
+  <label>メールアドレス</label>
+  <input type="email" formControlName="email">
+  <div *ngIf="email.touched && email.errors">
+    <div *ngIf="email.errors?.['required']">
+      必須項目です
+    </div>
+    <div *ngIf="!email.errors?.['required'] && email.errors?.['email']">
+      正しいメール形式で入力してください
+    </div>
+    <div *ngIf="email.errors?.['whitespace']">
+      空白は認められません
+    </div>
+  </div>
+  <div *ngIf="errorMessage">{{ errorMessage }}</div>
+
+  <label>パスワード</label>
+  <input type="password" formControlName="password">
+  <div *ngIf="password.touched && password.errors">
+    <div *ngIf="password.errors?.['required']">
+      必須項目です
+    </div>
+    <div *ngIf="!password.errors?.['required'] && password.errors?.['minlength']">
+      パスワードは8文字以上です
+    </div>
+    <div *ngIf="!password.errors?.['required'] && password.errors?.['maxlength']">
+      パスワードは32文字以内です
+    </div>
+    <div *ngIf="password.errors?.['whitespace']">
+      空白は認められません
+    </div>
+  </div>
+  <div *ngIf="errorMessage">{{ errorMessage }}</div>
+
+  <button type="submit" [disabled]="signupForm.invalid">
+    登録
+  </button>
+
+  <p *ngIf="errorMessage">{{ errorMessage }}</p>
+
+</form>

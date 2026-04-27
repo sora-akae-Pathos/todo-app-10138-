@@ -1,0 +1,80 @@
+<header class="header">
+    <h1 class="header-title">ホーム画面</h1>
+    <button class="signout" (click)="signout()">ログアウト</button>   
+</header>
+
+<main class="main">
+     <!-- 左カラム -->
+    <section class="left">
+        <h2>今日・明日のタスク</h2>
+
+        <table class="task-table">
+          <thead class="task-table-header">
+            <tr>
+              <th>タスク</th>
+              <th>期限</th>
+              <th>優先度</th>
+              <th>ステータス</th>
+            </tr>
+          </thead>
+      
+          <tbody class="task-table-body">
+            <tr *ngFor="let task of tasks$ | async"
+                (click)="goToDetail(task.id)">
+              <td>{{ task.title }}</td>
+              <td>
+                <span *ngIf="task.dayLabel === '今日'">今日</span>
+                <span *ngIf="task.dayLabel === '明日'">明日</span>
+              </td>
+              <td [ngClass]="{
+                'background-color-urgent': task.priority === '緊急', 
+                'background-color-high': task.priority === '高', 
+                'background-color-medium': task.priority === '中', 
+                'background-color-low': task.priority === '低', 
+                'background-color-none': task.priority === '無期'}">{{ task.priority }}</td>
+              <td [ngClass]="{
+                'background-color-unresolved': task.status === '未対応', 
+                'background-color-inprogress': task.status === '対応中', 
+                'background-color-struggling': task.status === '苦戦中', 
+                'background-color-onhold': task.status === '保留', 
+                'background-color-completed': task.status === '完了'}">{{ task.status }}</td>
+            </tr>
+          </tbody>
+        </table>
+
+    </section>
+
+    <!-- 右カラム -->
+    <section class="right">
+        <div class="top-row">
+            <input type="text" placeholder="検索" [formControl]="projectSearch">
+            <input type="text" placeholder="合言葉" [formControl]="joinPhrase">
+            <button type="button" (click)="joinProject()">参加</button>
+        </div>
+        <ul class="search-hits" *ngIf="searchResults$ | async as hits">
+          <li *ngFor="let p of hits"
+              class="search-hit"
+              [class.search-hit--selected]="selectedProject?.id === p.id"
+              (click)="selectProject(p)">{{ p.name }}</li>
+        </ul>
+        <!-- 新規作成 -->
+        <div class="create-box">
+            <button type="button" (click)="goToCreateProject()">＋ 新規プロジェクトを作成</button>
+        </div>
+        <h2>参加プロジェクト一覧</h2>
+        <ul class="joined-list" *ngIf="joinedProjects$ | async as joined">
+          <li class="joined-list-item" *ngFor="let jp of joined" (click)="goToProjectDetail(jp.id)">
+            {{ jp.name }}
+              <div class="menu-wrapper" (click)="$event.stopPropagation()">
+                <span class="menu-trigger" (click)="toggleMenu($event, jp)">︙</span>
+                <div class="menu" *ngIf="isMenuOpen && selectedProject?.id === jp.id">
+                  <div class="menu-item" (click)="onEdit()">編集</div>
+                  <div class="menu-item" (click)="onDelete()">削除</div>
+                  <div class="menu-item" (click)="onLeave()">脱退</div>
+                </div>
+              </div>
+          </li>
+        </ul>
+
+    </section>
+</main>

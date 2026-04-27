@@ -1,0 +1,51 @@
+<h1>ログイン</h1>
+
+<!-- <button (click)="googleLogin()">Googleでログイン</button> -->
+<span class="signup-link">
+  新規登録は<a [routerLink]="['/signup']">こちら</a>
+</span>
+
+<form [formGroup]="signinForm" (ngSubmit)="signin()">
+
+  <label>メールアドレス</label>
+  <input type="email" formControlName="email">
+  <div *ngIf="email.touched && email.errors">
+    <div *ngIf="email.errors?.['required']">
+      必須項目です
+    </div>
+    <div *ngIf="!email.errors?.['required'] && email.errors?.['email']">
+      正しいメール形式で入力してください
+    </div>
+    <div *ngIf="email.errors?.['whitespace']">
+      空白は認められません
+    </div>
+  </div>
+  <div *ngIf="errorMessage">{{ errorMessage }}</div>
+
+
+  <label>パスワード</label>
+  <input type="password" formControlName="password">
+  <div *ngIf="password.touched && password.errors">
+    <div *ngIf="password.errors?.['required']">
+      必須項目です
+    </div>
+    <div *ngIf="!password.errors?.['required'] && password.errors?.['minlength']">
+      パスワードは8文字以上です
+    </div>
+    <div *ngIf="!password.errors?.['required'] && password.errors?.['maxlength']">
+      パスワードは32文字以内です
+    </div>
+    <div *ngIf="password.errors?.['whitespace']">
+      空白は認められません
+    </div>
+  </div>
+  <div *ngIf="errorMessage">{{ errorMessage }}</div>
+
+
+  <button type="submit" [disabled]="signinForm.invalid">
+    ログイン
+  </button>
+
+  <p *ngIf="errorMessage">{{ errorMessage }}</p>
+
+</form>

@@ -1,0 +1,94 @@
+<ng-container *ngIf="viewModel$ | async as vm">
+  <header class="project-header">
+    <div class="title-upper">
+    <a routerLink="/" class="back-link">← ホーム</a>
+    <button type="button" class="logout-button" (click)="signout()">ログアウト</button>
+    </div>
+    <div class="title-row">
+    <h1 class="title">{{ vm.projectName ?? 'プロジェクト' }}</h1>
+    <button type="button" class="delete-project-button" (click)="deleteProject()">プロジェクトを削除</button>
+    </div>
+  </header>
+
+  <section class="toolbar">
+    <div class="toolbar-row">
+      <label class="field grow">
+        <span>タイトル検索</span>
+        <input type="text" [formControl]="titleSearch" placeholder="部分一致（trim・大文字小文字無視）" />
+      </label>
+      <label class="field">
+        <span>並び替え</span>
+        <select [ngModel]="vm.sortKey" (ngModelChange)="onSortKeyChange($event)">
+          <option *ngFor="let opt of sortOptions" [ngValue]="opt.value">{{ opt.label }}</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="toolbar-row">
+      <span class="label">ステータス（複数は OR）</span>
+      <label *ngFor="let s of statusOptions" class="chip">
+        <input
+          type="checkbox"
+          [checked]="isStatusSelected(s)"
+          (change)="onStatusToggle(s, $any($event.target).checked)" />
+        {{ s }}
+      </label>
+    </div>
+
+    <div class="toolbar-row">
+      <span class="label">優先度（複数は OR）</span>
+      <label *ngFor="let p of priorityOptions" class="chip">
+        <input
+          type="checkbox"
+          [checked]="isPrioritySelected(p)"
+          (change)="onPriorityToggle(p, $any($event.target).checked)" />
+        {{ p }}
+      </label>
+    </div>
+
+    <div class="toolbar-row wrap">
+      <label class="field">
+        <span>担当者</span>
+        <select [ngModel]="(assigneeId$ | async) ?? ''" (ngModelChange)="onAssigneeChange($event)">
+          <option value="">指定なし</option>
+          <option *ngFor="let m of vm.members; trackBy: trackByMemberUserId" [value]="m.userid">
+            {{ m.displayname || m.userid }}
+          </option>
+        </select>
+      </label>
+      <label class="field">
+        <span>期限（開始）</span>
+        <input type="date" [value]="currentDueFrom()" (change)="onDueFromInput($any($event.target).value)" />
+      </label>
+      <label class="field">
+        <span>期限（終了）</span>
+        <input type="date" [value]="currentDueTo()" (change)="onDueToInput($any($event.target).value)" />
+      </label>
+    </div>
+  </section>
+
+  <p class="empty-all" *ngIf="vm.filteredTotal === 0">課題がありません</p>
+  <p class="hint" *ngIf="vm.filteredTotal === 0 && vm.rawTotal === 0">課題の作成から始めてください。</p>
+  <button type="button" class="create-task-button" [routerLink]="['tasks/create']">+課題を作成</button>
+
+  <section class="groups">
+    <article *ngFor="let g of vm.groupedTasks; trackBy: trackByStatus" class="status-block">
+      <button type="button" class="status-head" (click)="toggleSection(g.status)">
+        <span class="chevron">{{ isSectionOpen(g.status) ? '▼' : '▶' }}</span>
+        <span class="status-name">{{ g.status }}</span>
+        <span class="count">（{{ g.tasks.length }} 件）</span>
+      </button>
+      <ul *ngIf="isSectionOpen(g.status)" class="task-list">
+        <li
+          *ngFor="let t of g.tasks; trackBy: trackByTaskId"
+          class="task-row"
+          (click)="goToTask(t.id)">
+          <span class="task-title">{{ t.title }}</span>
+          <span class="meta">期限: {{ t.dueDate | date: 'yyyy/MM/dd' }}</span>
+          <span class="meta">優先度: {{ t.priority }}</span>
+          <span class="meta">担当: {{ t.assignedname || '—' }}</span>
+        </li>
+      </ul>
+    </article>
+  </section>
+</ng-container>

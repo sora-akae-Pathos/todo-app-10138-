@@ -1,0 +1,16 @@
+<header>
+</header>
+<body>
+<div class="project-edit-container">
+  <form [formGroup]="project_edit_form" (ngSubmit)="editProject()" autocomplete="off">
+    <label>プロジェクト名</label>
+    <input type="text" placeholder="30文字以内" formControlName="name">
+    <label>合言葉</label>
+    <input type="text" placeholder="4文字以上15文字以内" formControlName="phrase">
+    <div class="button-container">
+    <button type="submit" [disabled]="project_edit_form.invalid">保存</button>
+    <button type="button" (click)="onCancel()">キャンセル</button>
+    </div>
+  </form>
+</div>
+</body>

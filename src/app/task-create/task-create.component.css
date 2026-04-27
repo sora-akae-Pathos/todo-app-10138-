@@ -1,0 +1,56 @@
+body {
+    min-height: 100vh;          /* 画面の高さを使う */
+    display: flex;
+       /* 横中央 */
+    align-items: center;        /* 縦中央 */
+    margin: 0;                  
+}
+
+div{
+    width: 100%;
+    margin: 0 auto;
+
+}
+
+form {
+    width: 80%;
+    margin: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.button-container {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+}
+
+textarea {
+    height: 120px;
+    margin-bottom: 10px;
+    font-size: 16px;
+}
+
+button[type="cancel"] {
+    background-color: #e4e3e3 ;
+    border: none;
+    border-radius: 5px;
+    padding: 5px;
+    cursor: pointer;
+    margin-left: 90px;
+    font-size: 16px;
+}
+
+button[type="submit"] {
+    background-color: #e4e3e3 ;
+    border: none;
+    border-radius: 5px;
+    padding: 5px;
+    cursor: pointer;
+}
+
+input[type="text"] {
+    height: 30px;
+    margin-bottom: 10px;
+    font-size: 16px;
+}
