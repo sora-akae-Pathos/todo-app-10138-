@@ -6,7 +6,6 @@ import {
   doc,
   docData,
   orderBy,
-  fromRef,
   getDoc,
   setDoc,
   query,
@@ -26,6 +25,7 @@ import {
   ProjectSearchHit,
   TaskDoc,
 } from '../models/home.models';
+import { toHiragana } from 'wanakana';
 
 /** 本日 00:00:00.000（ローカル） */
 function startOfLocalDay(base: Date): Date {
@@ -104,8 +104,14 @@ function toHomeRows(docs: (TaskDoc & { id: string })[]): HomeTaskRow[] {
 }
 
 @Injectable({ providedIn: 'root' })
+
 export class HomeFirestoreService {
   private readonly firestore = inject(Firestore);
+
+  private readonly getProjectDoc$ = (id: string) => {
+    const ref = doc(this.firestore, 'projects', id);
+    return docData(ref, { idField: 'id' });
+  }
 
   /** assignedid == uid かつ dueDate が今日〜明日（範囲クエリ） */
   homeTasks$(uid: string): Observable<HomeTaskRow[]> {
@@ -127,20 +133,20 @@ export class HomeFirestoreService {
    * 取得後に部分一致（大文字小文字無視）でフィルタする。
    */
   searchProjectsByName$(term: string): Observable<ProjectSearchHit[]> {
-    const t = term.trim();
+    const t = toHiragana(term.trim());
     if (!t) return of([]);
     const coll = collection(this.firestore, 'projects');
     const qy = query(
       coll,
-      where('name', '>=', t),
-      where('name', '<=', t + '\uf8ff'),
+      where('name_kana', '>=', t),
+      where('name_kana', '<=', t + '\uf8ff'),
       limit(50),
     );
     const lower = t.toLowerCase();
     return collectionData(qy, { idField: 'id' }).pipe(
       map((rows) =>
         (rows as (ProjectSearchHit & { id: string })[]).filter((r) =>
-          r.name.toLowerCase().includes(lower),
+          r.name_kana.toLowerCase().includes(lower),
         ),
       ),
     );
@@ -152,15 +158,14 @@ export class HomeFirestoreService {
     // return fromRef(q).pipe(
     //   switchMap((snap) => {
     //     const ids = [...new Set(snap.docs.map((d) => d.ref.parent.parent!.id))];
-       return collectionData(q).pipe(
+      return collectionData(q).pipe(
         tap(members => console.log('members:', members)),
-         switchMap((members: any[]) => {
-           const ids = [...new Set(members.map(m => m.projectid))];
-           console.log('ids:', ids);
+        switchMap((members: any[]) => {
+          const ids = [...new Set(members.map(m => m.projectid))];
+          console.log('ids:', ids);
         if (ids.length === 0) return of([]);
         return combineLatest(
-          ids.map((id) => 
-            docData(doc(this.firestore, 'projects', id), { idField: 'id' })),
+          ids.map((id) => this.getProjectDoc$(id)),
         ).pipe(
           map((list) =>
             list

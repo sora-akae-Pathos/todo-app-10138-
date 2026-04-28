@@ -5,13 +5,14 @@ import { CommonModule } from '@angular/common';
 import { trimRequired, noWhitespace } from '../shares/custom-validators';
 import { AuthService } from '../auth/auth.service';
 import { firstValueFrom, take, debounceTime, Observable, combineLatest, map, startWith, switchMap } from 'rxjs';
-import { setDoc, doc, updateDoc, collection, serverTimestamp, Firestore, collectionData, DocumentReference, docData, deleteDoc } from '@angular/fire/firestore';
+import { doc, updateDoc, collection, serverTimestamp, Firestore, collectionData, DocumentReference, docData, deleteDoc } from '@angular/fire/firestore';
 import { FormStateService } from '../shares/FormStateService';
 import { toHiragana } from 'wanakana';
 import { Location } from '@angular/common';
 import { TaskDoc } from '../models/home.models';
 import { toDateInputString, toTimestamp } from '../shares/utiles';
-
+import { MemberDoc } from '../models/models';
+import { CanComponentDeactivate } from '../shares/clear-session.guard';
 
 @Component({
   selector: 'app-task-detail',
@@ -20,7 +21,7 @@ import { toDateInputString, toTimestamp } from '../shares/utiles';
   templateUrl: "./task-detail.component.html",
   styleUrl: "./task-detail.component.css",
 })
-export class TaskDetailComponent {
+export class TaskDetailComponent implements CanComponentDeactivate {
   task!: TaskDoc;
   key!: string;
   task$!: Observable<any>;
@@ -63,7 +64,7 @@ export class TaskDetailComponent {
     let initialValue = true;
 
      // DB取得 → フォーム反映（セッション優先）
-  this.task$.subscribe(task => {
+    this.task$.subscribe(task => {
     this.task = task;
 
     const data = saved ?? {
@@ -141,6 +142,11 @@ watchMembers() {
     const raw = this.task_detail_form.value;
     const title_kana = toHiragana(raw.title ?? '');
 
+    //担当者の表示名取得
+    const members =await firstValueFrom(this.watchMembers()) as MemberDoc[];
+    const selected = members.find(m => m.userid === raw.assignedid);
+    const assignedname = selected?.displayname;
+
     await updateDoc(this.taskRef, {
       title: raw.title,
       title_kana: title_kana,
@@ -150,6 +156,7 @@ watchMembers() {
       priority: raw.priority,
       status: raw.status,
       assignedid: raw.assignedid,
+      assignedname: assignedname,
       approach: raw.approach,
       completioncriteria: raw.completioncriteria,
       updatedAt: serverTimestamp(),
@@ -190,5 +197,9 @@ watchMembers() {
         this.router.navigate(['/']);
       }
     }
+  }
+
+  onLeave(): void {
+    this.formState.clear(this.key);
   }
 }

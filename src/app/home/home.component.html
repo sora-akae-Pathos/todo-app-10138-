@@ -4,7 +4,7 @@
 </header>
 
 <main class="main">
-     <!-- 左カラム -->
+    <!-- 左カラム -->
     <section class="left">
         <h2>今日・明日のタスク</h2>
 
@@ -63,11 +63,11 @@
         </div>
         <h2>参加プロジェクト一覧</h2>
         <ul class="joined-list" *ngIf="joinedProjects$ | async as joined">
-          <li class="joined-list-item" *ngFor="let jp of joined" (click)="goToProjectDetail(jp.id)">
+          <li class="joined-list-item" *ngFor="let jp of joined" (click)="goToProjectDetail(jp.id)" >
             {{ jp.name }}
-              <div class="menu-wrapper" (click)="$event.stopPropagation()">
+              <div class="menu-wrapper" >
                 <span class="menu-trigger" (click)="toggleMenu($event, jp)">︙</span>
-                <div class="menu" *ngIf="isMenuOpen && selectedProject?.id === jp.id">
+                <div class="menu" *ngIf="isMenuOpen && selectedProject?.id === jp.id" >
                   <div class="menu-item" (click)="onEdit()">編集</div>
                   <div class="menu-item" (click)="onDelete()">削除</div>
                   <div class="menu-item" (click)="onLeave()">脱退</div>

@@ -8,6 +8,7 @@ import { firstValueFrom, take, debounceTime } from 'rxjs';
 import { setDoc, doc, addDoc, collection, serverTimestamp, Firestore } from '@angular/fire/firestore';
 import { FormStateService } from '../shares/FormStateService';
 import { toHiragana } from 'wanakana';
+import { CanComponentDeactivate } from '../shares/clear-session.guard';
 
 @Component({
   selector: 'app-project-create',
@@ -16,7 +17,8 @@ import { toHiragana } from 'wanakana';
   templateUrl: './project-create.component.html',
   styleUrl: './project-create.component.css',
 })
-export class ProjectCreateComponent {
+export class ProjectCreateComponent implements CanComponentDeactivate {
+  key!: string;
 
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
@@ -32,7 +34,8 @@ export class ProjectCreateComponent {
   }
 
   ngOnInit() {
-    const saved = this.formState.load<any>('project_create_form');
+    this.key = `project_create_form`;
+    const saved = this.formState.load<any>(this.key);
     if (saved) {
       this.project_create_form.patchValue(saved);
     }
@@ -46,7 +49,7 @@ export class ProjectCreateComponent {
         name: value.name?.trim(),
         phrase: value.phrase?.trim(),
       };
-      this.formState.save('project_create_form', filteredValue);
+      this.formState.save(this.key, filteredValue);
       console.log(filteredValue);
     // this.project_create_form.valueChanges.subscribe(value => {
     //   this.formState.save('project_create_form', value);
@@ -91,13 +94,17 @@ export class ProjectCreateComponent {
 
     await this.router.navigate(['/projects', projectDoc.id]);
 
-    this.formState.clear('project_create_form');
+    this.formState.clear(this.key);
 
     window.alert('プロジェクトを作成しました');
   }
 
   onCancel() {
-    this.formState.clear('project_create_form');
+    this.formState.clear(this.key);
     this.router.navigate(['/']);
+  }
+
+  onLeave(): void {
+    this.formState.clear(this.key);
   }
 }

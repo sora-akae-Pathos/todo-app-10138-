@@ -5,10 +5,12 @@ import { CommonModule } from '@angular/common';
 import { trimRequired } from '../shares/custom-validators';
 import { AuthService } from '../auth/auth.service';
 import { firstValueFrom, take, debounceTime, Observable, combineLatest, map, startWith } from 'rxjs';
-import { addDoc, collection, serverTimestamp, Firestore, collectionData } from '@angular/fire/firestore';
+import { addDoc, collection, serverTimestamp, Firestore, collectionData, Timestamp } from '@angular/fire/firestore';
 import { FormStateService } from '../shares/FormStateService';
 import { toHiragana } from 'wanakana';
 import { toTimestamp } from '../shares/utiles';
+import { MemberDoc } from '../models/models';
+import { CanComponentDeactivate } from '../shares/clear-session.guard';
 
 @Component({
   selector: 'app-task-create',
@@ -17,7 +19,8 @@ import { toTimestamp } from '../shares/utiles';
   templateUrl: './task-create.component.html',
   styleUrl: './task-create.component.css',
 })
-export class TaskCreateComponent {
+
+export class TaskCreateComponent implements CanComponentDeactivate {
   projectId!: string;
   key!: string;
   vm$!: Observable<{ user: any | null; members: any[] }>;
@@ -118,6 +121,11 @@ watchMembers() {
     const raw = this.task_create_form.value;
     const title_kana = toHiragana(raw.title ?? '');
 
+    //担当者の表示名取得
+    const members =await firstValueFrom(this.watchMembers()) as MemberDoc[];
+    const selected = members.find(m => m.userid === raw.assignedid);
+    const assignedname = selected?.displayname;
+
     const taskRef = collection(this.firestore, 'tasks');
     await addDoc(taskRef, {
       title: raw.title,
@@ -128,6 +136,7 @@ watchMembers() {
       priority: raw.priority?.trim(),
       status: raw.status?.trim(),
       assignedid: raw.assignedid?.trim(),
+      assignedname: assignedname,
       approach: raw.approach?.trim(),
       completioncriteria: raw.completioncriteria?.trim(),
       createdBy: u.uid,
@@ -147,5 +156,9 @@ watchMembers() {
   onCancel() {
     this.formState.clear(this.key);
     this.router.navigate(['/projects', this.projectId]);
+  }
+
+  onLeave(): void {
+    this.formState.clear(this.key);
   }
 }

@@ -42,20 +42,13 @@ textarea {
     font-size: 16px;
 }
 
-button[type="cancel"] {
-    background-color: #e4e3e3 ;
-    border: none;
-    border-radius: 5px;
-    padding: 5px;
+button[type="button"] {
     cursor: pointer;
     margin-left: 90px;
     font-size: 16px;
 }
 
 button[type="submit"] {
-    background-color: #e4e3e3 ;
-    border: none;
-    border-radius: 5px;
     padding: 5px;
     cursor: pointer;
 }

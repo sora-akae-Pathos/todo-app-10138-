@@ -1,0 +1,17 @@
+h1{
+    font-size: 20px;
+    margin: 0;
+    padding: 0;
+    height: 30px;
+    cursor: pointer;
+}
+
+.header-title{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+button{
+    cursor: pointer;
+}

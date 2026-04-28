@@ -154,15 +154,13 @@ td{
 .menu-wrapper {
   position: absolute;
   right: 10px;
-  top: 50%;
-  transform: translateY(-50%);
+  top: 0%;
 }
 
-/* メニュー初期は非表示 */
 .menu {
   position: absolute;
   right: 100%;
-  top: 50%;
+  top: 0%;
   transform: translateY(-50%);
   margin-right: 0px;
 
@@ -171,9 +169,13 @@ td{
   width: 100px;
   z-index: 1000;
 
-  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  /* box-shadow: 0 4px 10px rgba(0,0,0,0.2); */
 
   /* display: none; */
+}
+
+.menu-trigger:hover {
+  background-color: #1091fa;
 }
 
 /* .menu-wrapper:hover .menu {

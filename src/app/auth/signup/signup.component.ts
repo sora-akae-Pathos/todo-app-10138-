@@ -4,7 +4,10 @@ import { FormBuilder, Validators, ReactiveFormsModule, FormControl, AbstractCont
 import { Firestore, doc, setDoc, serverTimestamp, collection, query, where, getDocs } from '@angular/fire/firestore';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../auth.service';
-import { trimRequired, noWhitespace } from '../../shares/custom-validators';
+import { trimRequired, noWhitespace, passwordMismatch } from '../../shares/custom-validators';
+import { FormStateService } from '../../shares/FormStateService';
+import { CanComponentDeactivate } from '../../shares/clear-session.guard';
+import { debounceTime } from 'rxjs';
 
 type UserField = 'username' | 'email';
 
@@ -16,14 +19,15 @@ type UserField = 'username' | 'email';
   styleUrl:'./signup.component.css'
 })
 
-export class SignUpComponent {
-
+export class SignUpComponent implements CanComponentDeactivate {
+  key!: string;
   errorMessage: string = '';
 
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
   private router = inject(Router);
   private firestore = inject(Firestore);
+  private formState = inject(FormStateService);
 
   get username(): FormControl {
     return this.signupForm.get('username') as FormControl;
@@ -37,36 +41,41 @@ export class SignUpComponent {
     return this.signupForm.get('password') as FormControl;
   }
 
-  get usernameValue(): string {
-    return this.username.value ?? '';
+  get confirmPassword(): FormControl {
+    return this.signupForm.get('confirmPassword') as FormControl;
   }
+
+  // get usernameValue(): string {
+  //   return this.username.value ?? '';
+  // }
 
   // get emailValue(): string {
   //   return this.email.value ?? '';
   // }
 
   ngOnInit(){
-    this.signupForm.valueChanges.subscribe(value => {
-      console.log(value);
-      const { password, ...safeData } = value;
-      localStorage.setItem('signupForm', JSON.stringify(safeData));
-    });
-    this.loadForm();
-  }
-
-  loadForm(){
-    const saved = localStorage.getItem('signupForm');
-    if(saved){
-      this.signupForm.patchValue(JSON.parse(saved));
+    this.key = `signup_form`;
+    const saved = this.formState.load<any>(this.key);
+    if (saved) {
+      this.signupForm.patchValue(saved);
     }
+    this.signupForm.valueChanges.pipe(debounceTime(300)).subscribe(value => {
+      const filteredValue = {
+        username: value.username?.trim() ?? '',
+        email: value.email?.trim() ?? '',
+      };
+      this.formState.save(this.key, filteredValue);
+      console.log(filteredValue);
+    });
   }
 
   // 新規登録フォーム
   signupForm = this.fb.group({
     username: ['', [trimRequired, Validators.maxLength(30)]],
     email: ['', [trimRequired, noWhitespace, Validators.email]],
-    password: ['', [trimRequired, noWhitespace, Validators.minLength(8), Validators.maxLength(32)]]
-  });
+    password: ['', [trimRequired, noWhitespace, Validators.minLength(8), Validators.maxLength(32)]],
+    confirmPassword: ['', [trimRequired, noWhitespace, Validators.minLength(8), Validators.maxLength(32)]]
+  }, { validator: passwordMismatch });
 
 async isFieldTaken(field: UserField, value: string): Promise<boolean> {
   const usersRef = collection(this.firestore, 'users');
@@ -96,6 +105,7 @@ async isEmailTaken(email: string): Promise<boolean> {
     const email = raw.email?.trim();
     const password = raw.password?.trim();
 
+
     try {
       // ユーザー名、メールアドレスの重複チェック
       const usernametaken = await this.isUsernameTaken(username!);
@@ -121,10 +131,13 @@ async isEmailTaken(email: string): Promise<boolean> {
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       });
-      localStorage.removeItem('signupForm');
+      this.formState.clear(this.key);
       this.router.navigate(['/']); // 登録後の遷移
     } catch (error: any) {
       this.errorMessage = error.message;
     }
+  }
+  onLeave(): void {
+    this.formState.clear(this.key);
   }
 }

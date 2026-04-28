@@ -29,11 +29,7 @@ export interface TaskDoc {
   updatedBy: string;
 }
 
-/** ホーム表用（dayLabel 付与済み） */
-export interface HomeTaskRow extends TaskDoc {
-  id: string;
-  dayLabel: '今日' | '明日';
-}
+
 
 /** Firestore projects/{projectId} */
 export interface ProjectDoc {
@@ -45,14 +41,18 @@ export interface ProjectDoc {
   updatedAt: Timestamp;
 }
 
-export interface JoinedProjectView extends ProjectDoc {
-  id: string;
+/** Firestore projects/{projectId}/members/{userId} */
+export interface MemberDoc {
+  userid: string;
+  displayname: string;
+  projectid: string;
+  joinedAt: Timestamp | null;
 }
 
-/** 検索結果行 */
-export interface ProjectSearchHit {
-  id: string;
-  name: string;
-  name_kana: string;
-  phrase: string;
+/** Firestore users/{userId} */
+export interface UserDoc {
+  displayname: string;
+  email: string;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
 }
