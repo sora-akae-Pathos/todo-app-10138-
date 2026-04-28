@@ -20,3 +20,10 @@ export function toTimestamp(dateString: string | null): Timestamp | null {
 
   return Timestamp.fromDate(date);
 }
+
+//全角数字を半角に変換
+export function normalizeNumbers(input: string): string {
+  return input.replace(/[０-９]/g, (char) =>
+      String.fromCharCode(char.charCodeAt(0) - 0xFEE0)
+    );
+  }

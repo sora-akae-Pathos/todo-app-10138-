@@ -16,6 +16,9 @@ import { HomeTaskRow, JoinedProjectView, ProjectSearchHit } from '../models/home
   styleUrl: './home.component.css',
 })
 export class HomeComponent {
+  selectedProject: ProjectSearchHit | null = null;
+  isMenuOpen: boolean = false;
+
   private readonly authService = inject(AuthService);
   private readonly homeFs = inject(HomeFirestoreService);
   private readonly router = inject(Router);
@@ -24,8 +27,6 @@ export class HomeComponent {
 
   readonly projectSearch = new FormControl('', { nonNullable: true });
   readonly joinPhrase = new FormControl('', { nonNullable: true });
-
-  selectedProject: ProjectSearchHit | null = null;
 
   // 今日・明日のタスクを取得
   readonly tasks$: Observable<HomeTaskRow[]> = this.authService.user$.pipe(
@@ -101,9 +102,7 @@ export class HomeComponent {
     }
   }
 
-  isMenuOpen = false;
-
-  toggleMenu(event: MouseEvent, jp: any): void {
+  toggleMenu(event: MouseEvent, jp: JoinedProjectView): void {
     event.stopPropagation();
   
     if (this.selectedProject?.id === jp.id) {
@@ -114,27 +113,28 @@ export class HomeComponent {
     }
   }
 
-  /* 外クリックで閉じる */
-@HostListener('document:click')
-closeMenu(): void {
-  this.isMenuOpen = false;
-}
+    /* 外クリックで閉じる */
+  @HostListener('document:click')
+  closeMenu(): void {
+    this.isMenuOpen = false;
+  }
 
-onEdit() {
-  this.router.navigate(['/projects', this.selectedProject?.id, 'edit']);
-}
+  onEdit() {
+    this.router.navigate(['/projects', this.selectedProject?.id, 'edit']);
+  }
 
-onDelete() {
-  this.homeFs.deleteProject(this.selectedProject?.id ?? '');
-}
+  onDelete() {
+    if(!this.selectedProject) return;
+    this.homeFs.deleteProject(this.selectedProject.id);
+  }
 
-async onLeave() {
-  const user = await firstValueFrom(this.authService.user$);
-  this.homeFs.leaveProject(this.selectedProject?.id ?? '', user?.uid ?? '');
-  this.refreshJoined$.next();
-  this.router.navigate(['/']);
-  window.alert('プロジェクトから脱退しました');
-}
+  async onLeave() {
+    const user = await firstValueFrom(this.authService.user$);
+    this.homeFs.leaveProject(this.selectedProject?.id ?? '', user?.uid ?? '');
+    this.refreshJoined$.next();
+    this.router.navigate(['/']);
+    window.alert('プロジェクトから脱退しました');
+  }
 
   // ログアウト
   async signout(): Promise<void> {

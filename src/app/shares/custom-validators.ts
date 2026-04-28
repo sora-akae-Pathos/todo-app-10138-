@@ -1,4 +1,5 @@
-import { AbstractControl, ValidationErrors } from '@angular/forms';
+import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
+import { FormGroup } from '@angular/forms';
 
 export const trimRequired = (control: AbstractControl): ValidationErrors | null => {
   const value = control.value?.trim();
@@ -8,4 +9,13 @@ export const trimRequired = (control: AbstractControl): ValidationErrors | null 
 export const noWhitespace = (control: AbstractControl): ValidationErrors | null => {
   const value = control.value || '';
   return /\s/.test(value) ? { whitespace: true } : null;
+};
+
+export const passwordMismatch = (control: AbstractControl): ValidationErrors | null => {
+  const password = control.get('password')?.value;
+  const confirm = control.get('confirmPassword')?.value;
+
+  if (!password || !confirm) return null;
+
+  return password !== confirm ? { passwordMismatch: true } : null;
 };

@@ -7,7 +7,7 @@
 <form [formGroup]="signupForm" (ngSubmit)="signup()">
 
   <label>ユーザー名</label>
-  <input type="text" formControlName="username">
+  <input type="text" placeholder="30文字以内" formControlName="username">
   <div *ngIf="username.touched && username.errors">
     <div *ngIf="username.errors?.['required']">
       ユーザー名は1文字以上入力してください（空白のみは不可）
@@ -22,7 +22,7 @@
   <div *ngIf="errorMessage">{{ errorMessage }}</div>
 
   <label>メールアドレス</label>
-  <input type="email" formControlName="email">
+  <input type="email" placeholder="@gmail.com等" formControlName="email">
   <div *ngIf="email.touched && email.errors">
     <div *ngIf="email.errors?.['required']">
       必須項目です
@@ -37,7 +37,7 @@
   <div *ngIf="errorMessage">{{ errorMessage }}</div>
 
   <label>パスワード</label>
-  <input type="password" formControlName="password">
+  <input type="password" placeholder="8文字以上32文字以内" formControlName="password">
   <div *ngIf="password.touched && password.errors">
     <div *ngIf="password.errors?.['required']">
       必須項目です
@@ -50,6 +50,18 @@
     </div>
     <div *ngIf="password.errors?.['whitespace']">
       空白は認められません
+    </div>
+  </div>
+  <div *ngIf="errorMessage">{{ errorMessage }}</div>
+
+  <label>確認用パスワード</label>
+  <input type="password" placeholder="8文字以上32文字以内" formControlName="confirmPassword">
+  <div *ngIf="confirmPassword.touched && confirmPassword.errors">
+    <div *ngIf="confirmPassword.errors?.['required']">
+      必須項目です
+    </div>
+    <div *ngIf="signupForm.hasError('passwordMismatch') && signupForm.get('confirmPassword')?.dirty">
+      パスワードが一致しません
     </div>
   </div>
   <div *ngIf="errorMessage">{{ errorMessage }}</div>
