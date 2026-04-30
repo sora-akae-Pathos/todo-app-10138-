@@ -1,7 +1,7 @@
-<header class="header">
+<!-- <header class="header">
     <h1 class="header-title">ホーム画面</h1>
     <button class="signout" (click)="signout()">ログアウト</button>   
-</header>
+</header> -->
 
 <main class="main">
     <!-- 左カラム -->
@@ -68,9 +68,9 @@
               <div class="menu-wrapper" >
                 <span class="menu-trigger" (click)="toggleMenu($event, jp)">︙</span>
                 <div class="menu" *ngIf="isMenuOpen && selectedProject?.id === jp.id" >
-                  <div class="menu-item" (click)="onEdit()">編集</div>
-                  <div class="menu-item" (click)="onDelete()">削除</div>
-                  <div class="menu-item" (click)="onLeave()">脱退</div>
+                  <div class="menu-item" (click)="onEdit($event)">編集</div>
+                  <div class="menu-item" (click)="onDelete($event)">削除</div>
+                  <div class="menu-item" (click)="onDrop($event)">脱退</div>
                 </div>
               </div>
           </li>

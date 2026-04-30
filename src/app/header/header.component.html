@@ -1,6 +1,12 @@
 <header>
   <div class="header-title">
     <h1 [routerLink]="['/']">タスク管理アプリ</h1>
-    <button (click)="signout()">ログアウト</button>
+    <div class="menu-wrapper">
+      <span class="menu-trigger" (click)="toggleMenu($event)">≡</span>
+      <div class="menu" *ngIf="isMenuOpen" >
+        <div class="menu-item" (click)="signout()">ログアウト</div>
+        <div class="menu-item" (click)="goToMypage()">マイページ</div>
+      </div>
+    </div>
   </div>
 </header>

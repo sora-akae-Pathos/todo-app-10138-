@@ -12,7 +12,7 @@ import { Location } from '@angular/common';
 import { TaskDoc } from '../models/home.models';
 import { toDateInputString, toTimestamp } from '../shares/utiles';
 import { MemberDoc } from '../models/models';
-import { CanComponentDeactivate } from '../shares/clear-session.guard';
+// import { TaskDetailService } from './task-detail.service';
 
 @Component({
   selector: 'app-task-detail',
@@ -21,7 +21,7 @@ import { CanComponentDeactivate } from '../shares/clear-session.guard';
   templateUrl: "./task-detail.component.html",
   styleUrl: "./task-detail.component.css",
 })
-export class TaskDetailComponent implements CanComponentDeactivate {
+export class TaskDetailComponent {
   task!: TaskDoc;
   key!: string;
   task$!: Observable<any>;
@@ -36,17 +36,18 @@ export class TaskDetailComponent implements CanComponentDeactivate {
   private route = inject(ActivatedRoute);
   private formState = inject(FormStateService);
   private location = inject(Location);
+  // private taskDetailService = inject(TaskDetailService);
   private isSavingEnabled = true;
 
   task_detail_form = this.fb.group({
     title: ['', [trimRequired, Validators.maxLength(50)]],
-    description: ['', [trimRequired, Validators.maxLength(500)]],
+    description: ['', [Validators.maxLength(500)]],
     dueDate: ['', [Validators.required]],
-    priority: ['', [Validators.required]],
-    status: ['', [Validators.required]],
-    assignedid: ['', [Validators.required]],
-    approach: ['', [trimRequired, Validators.maxLength(100)]],
-    completioncriteria: ['', [trimRequired, Validators.maxLength(100)]],
+    priority: ['', []],
+    status: ['', []],
+    assignedid: ['', []],
+    approach: ['', [Validators.maxLength(100)]],
+    completioncriteria: ['', [Validators.maxLength(100)]],
   });
 
   ngOnInit() {
@@ -132,6 +133,7 @@ watchMembers() {
     startWith(0));
 
   async taskEdit() {
+    try{
     const u = await firstValueFrom(this.authService.user$.pipe(take(1)));
     if (!u) {
       window.alert('ログインしてください');
@@ -147,18 +149,36 @@ watchMembers() {
     const selected = members.find(m => m.userid === raw.assignedid);
     const assignedname = selected?.displayname;
 
+    // const payload = {
+    //   title: raw.title,
+    //   title_kana: title_kana ,
+    //   projectid: this.task.projectid,
+    //   description: raw.description,
+    //   dueDate: toTimestamp(raw.dueDate ?? null),
+    //   priority: raw.priority,
+    //   status: raw.status,
+    //   assignedid: raw.assignedid,
+    //   assignedname: assignedname,
+    //   approach: raw.approach,
+    //   completioncriteria: raw.completioncriteria,
+    //   updatedAt: serverTimestamp(),
+    //   updatedBy: u.uid,
+    // }
+
+    // await this.taskDetailService.updateTask(this.taskRef, payload);
+
     await updateDoc(this.taskRef, {
       title: raw.title,
       title_kana: title_kana,
       projectid: this.task.projectid,
-      description: raw.description,
+      description: raw.description ?? '',
       dueDate: toTimestamp(raw.dueDate ?? null),
-      priority: raw.priority,
-      status: raw.status,
-      assignedid: raw.assignedid,
-      assignedname: assignedname,
-      approach: raw.approach,
-      completioncriteria: raw.completioncriteria,
+      priority: raw.priority ?? '',
+      status: raw.status ?? '',
+      assignedid: raw.assignedid ?? '',
+      assignedname: assignedname ?? '',
+      approach: raw.approach ?? '',
+      completioncriteria: raw.completioncriteria ?? '',
       updatedAt: serverTimestamp(),
       updatedBy: u.uid,
     });
@@ -175,7 +195,11 @@ watchMembers() {
     console.log(this.key);
 
     window.alert('課題を更新しました');
-  }
+} catch (error) {
+  window.alert('課題の更新に失敗しました')
+  console.error(error);
+}
+}
 
   onCancel() {
     this.formState.clear(this.key);
@@ -188,18 +212,25 @@ watchMembers() {
 
   async deleteTask() {
     if(confirm('課題を削除しますか？')) {
-      this.formState.clear(this.key);
+      try{
       await deleteDoc(this.taskRef);
+      this.formState.clear(this.key);
       window.alert('課題を削除しました');
       if(window.history.length > 1) {
         this.location.back();
       } else {
         this.router.navigate(['/']);
       }
+    } catch (error) {
+      window.alert('課題の削除に失敗しました')
+      console.error(error);
+    }
     }
   }
 
-  onLeave(): void {
+  ngOnDestroy(): void {
+    console.log('onDestroy');
     this.formState.clear(this.key);
   }
+  
 }

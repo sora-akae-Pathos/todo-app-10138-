@@ -5,10 +5,9 @@ import { CommonModule } from '@angular/common';
 import { trimRequired, noWhitespace } from '../shares/custom-validators';
 import { AuthService } from '../auth/auth.service';
 import { firstValueFrom, take, debounceTime } from 'rxjs';
-import { setDoc, doc, addDoc, collection, serverTimestamp, Firestore } from '@angular/fire/firestore';
+import { getDoc, setDoc, doc, addDoc, collection, serverTimestamp, Firestore } from '@angular/fire/firestore';
 import { FormStateService } from '../shares/FormStateService';
 import { toHiragana } from 'wanakana';
-import { CanComponentDeactivate } from '../shares/clear-session.guard';
 
 @Component({
   selector: 'app-project-create',
@@ -17,7 +16,7 @@ import { CanComponentDeactivate } from '../shares/clear-session.guard';
   templateUrl: './project-create.component.html',
   styleUrl: './project-create.component.css',
 })
-export class ProjectCreateComponent implements CanComponentDeactivate {
+export class ProjectCreateComponent {
   key!: string;
 
   private fb = inject(FormBuilder);
@@ -62,6 +61,7 @@ export class ProjectCreateComponent implements CanComponentDeactivate {
   });
 
   async createProject() {
+    try{
     const u = await firstValueFrom(this.authService.user$.pipe(take(1)));
     if (!u) {
       window.alert('ログインしてください');
@@ -85,10 +85,14 @@ export class ProjectCreateComponent implements CanComponentDeactivate {
       updatedAt: serverTimestamp(),
     });
 
+    const userDoc = await getDoc(doc(this.firestore, 'users', u.uid));
+    const userData = userDoc.data() as { displayname?: string };
+    const displayname = userData.displayname ?? '';
+
     await setDoc(doc(this.firestore, 'projects', projectDoc.id, 'members', u.uid), {
       userid: u.uid,
       projectid: projectDoc.id,
-      displayname: u.displayName,
+      displayname: displayname,
       joinedAt: serverTimestamp(),
     });
 
@@ -97,14 +101,19 @@ export class ProjectCreateComponent implements CanComponentDeactivate {
     this.formState.clear(this.key);
 
     window.alert('プロジェクトを作成しました');
+  } catch (error) {
+    window.alert('プロジェクトの作成に失敗しました')
+    console.error(error);
   }
+}
 
   onCancel() {
     this.formState.clear(this.key);
     this.router.navigate(['/']);
   }
 
-  onLeave(): void {
+  ngOnDestroy(): void {
+    console.log('onDestroy');
     this.formState.clear(this.key);
   }
 }

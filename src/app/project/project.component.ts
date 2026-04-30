@@ -2,7 +2,7 @@ import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { BehaviorSubject, Observable, combineLatest } from 'rxjs';
+import { BehaviorSubject, Observable, combineLatest, firstValueFrom } from 'rxjs';
 import { debounceTime, distinctUntilChanged, filter, map, startWith, switchMap } from 'rxjs/operators';
 import { PRIORITY_ORDER, STATUS_ORDER } from '../models/home.models';
 import { ProjectFirestoreService } from './project-firestore.service';
@@ -79,7 +79,8 @@ function applyStatusPriorityAssigneeDueFilter(
   return tasks.filter((t) => {
     if (statusSel.size > 0 && !statusSel.has(t.status)) return false;
     if (prioritySel.size > 0 && !prioritySel.has(t.priority)) return false;
-    if (assigneeId && t.assignedid !== assigneeId) return false;
+    if (assigneeId === 'UNASSIGNED' && t.assignedid) return false;
+    if (assigneeId && assigneeId !== 'UNASSIGNED' && t.assignedid !== assigneeId) return false;
     if (dueFrom && t.dueDate.getTime() < startOfDay(dueFrom).getTime()) return false;
     if (dueTo && t.dueDate.getTime() > endOfDay(dueTo).getTime()) return false;
     return true;
@@ -277,14 +278,19 @@ export class ProjectComponent {
   async deleteProject(): Promise<void> {
     const projectid = this.route.snapshot.paramMap.get('projectId');
     if(!projectid) return;
+    try{
     await this.projectFs.deleteProject(projectid);
     window.alert('プロジェクトを削除しました');
     await this.router.navigate(['/']);
+  } catch (error) {
+    window.alert('プロジェクトの削除に失敗しました')
+    console.error(error);
+  }
   }
 
   // ログアウト
-  async signout(): Promise<void> {
-    await this.authService.signout();
-    await this.router.navigate(['/signin']);
-  }
+  // async signout(): Promise<void> {
+  //   await this.authService.signout();
+  //   await this.router.navigate(['/signin']);
+  // }
 }

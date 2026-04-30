@@ -1,9 +1,9 @@
 <ng-container *ngIf="viewModel$ | async as vm">
   <header class="project-header">
-    <div class="title-upper">
+    <!-- <div class="title-upper">
     <a routerLink="/" class="back-link">← ホーム</a>
     <button type="button" class="logout-button" (click)="signout()">ログアウト</button>
-    </div>
+    </div> -->
     <div class="title-row">
     <h1 class="title">{{ vm.projectName ?? 'プロジェクト' }}</h1>
     <button type="button" class="delete-project-button" (click)="deleteProject()">プロジェクトを削除</button>
@@ -51,6 +51,7 @@
         <span>担当者</span>
         <select [ngModel]="(assigneeId$ | async) ?? ''" (ngModelChange)="onAssigneeChange($event)">
           <option value="">指定なし</option>
+          <option value="UNASSIGNED">未割り当て</option>
           <option *ngFor="let m of vm.members; trackBy: trackByMemberUserId" [value]="m.userid">
             {{ m.displayname || m.userid }}
           </option>
