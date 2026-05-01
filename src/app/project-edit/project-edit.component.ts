@@ -9,7 +9,6 @@ import { updateDoc, doc, docData, deleteDoc, serverTimestamp, Firestore, Documen
 import { FormStateService } from '../shares/FormStateService';
 import { toHiragana } from 'wanakana';
 import { ProjectDoc } from '../models/home.models';
-import { CanComponentDeactivate } from '../shares/clear-session.guard';
 import { ProjectEditService } from './project-edit.service';
 
 @Component({
@@ -19,7 +18,7 @@ import { ProjectEditService } from './project-edit.service';
   templateUrl: './project-edit.component.html',
   styleUrl: './project-edit.component.css',
 })
-export class ProjectEditComponent implements CanComponentDeactivate {
+export class ProjectEditComponent {
   projectId: string | null = null;
   key!: string;
   project$!: Observable<ProjectDoc>;
@@ -34,7 +33,7 @@ export class ProjectEditComponent implements CanComponentDeactivate {
   private route = inject(ActivatedRoute);
   private formState = inject(FormStateService);
   private location = inject(Location);
-  private projectEditService = inject(ProjectEditService);
+  private peService = inject(ProjectEditService);
 
 
   // get name(): FormControl {
@@ -104,7 +103,7 @@ export class ProjectEditComponent implements CanComponentDeactivate {
     const phrase = raw.phrase?.trim();
     const name_kana = toHiragana(name);
 
-    await this.projectEditService.updateProject(this.projectId, {
+    await this.peService.updateProject(this.projectId, {
       name: name ?? '',
       name_kana: name_kana ?? '',
       phrase: phrase ?? '',
@@ -121,9 +120,9 @@ export class ProjectEditComponent implements CanComponentDeactivate {
     } else {
       await this.router.navigate(['/']);
     }
-      window.alert('プロジェクトを保存しました');
+      window.alert('プロジェクトを更新しました');
     } catch (error) {
-      window.alert('保存に失敗しました')
+      window.alert('プロジェクトの更新に失敗しました')
       console.error(error);
     }
   }
@@ -139,23 +138,22 @@ export class ProjectEditComponent implements CanComponentDeactivate {
   }
 
   async deleteProject() {
-    try {
-    if(confirm('プロジェクトを削除しますか？')) {
-      await deleteDoc(this.projectRef);
-      window.alert('プロジェクトを削除しました');
-      if(window.history.length > 1) {
-        this.location.back();
-      } else {
-        this.router.navigate(['/']);
-      }
-    }
-    } catch (error) {
-      window.alert('削除に失敗しました')
-      console.error(error);
+    if(!this.projectId) return;
+      try{
+        await this.peService.deleteProject(this.projectId);
+        if(window.history.length > 1) {
+          this.location.back();
+        } else {
+          this.router.navigate(['/']);
+        }
+        window.alert('プロジェクトを削除しました');
+      } catch (error) {
+        window.alert('プロジェクトの削除に失敗しました')
     }
   }
 
-  onLeave(): void {
+  ngOnDestroy(): void {
+    console.log('onDestroy');
     this.formState.clear(this.key);
   }
 }

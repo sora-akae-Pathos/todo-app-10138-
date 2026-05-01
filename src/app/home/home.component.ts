@@ -35,25 +35,26 @@ export class HomeComponent {
 
   // 参加プロジェクト一覧を取得
   readonly joinedProjects$: Observable<JoinedProjectView[]> = this.authService.user$.pipe(
-    tap(u => console.log('user:', u)),
+    // tap(u => console.log('user:', u)),
     switchMap((u) => {
       if (!u) return of([]);
       return merge(of(undefined), this.refreshJoined$).pipe(
         switchMap(() => this.homeFs.joinedProjects$(u.uid)),
-        tap(console.log)
+        // tap(console.log)
       );
     }),
   );
 
   // プロジェクト検索結果を取得
   readonly searchResults$: Observable<ProjectSearchHit[]> = this.projectSearch.valueChanges.pipe(
-    debounceTime(300),
+    debounceTime(200),
     distinctUntilChanged(),
     switchMap((v) => this.homeFs.searchProjectsByName$(v)),
   );
 
   // プロジェクト詳細画面に遷移
   goToProjectDetail(projectId: string): void {
+    console.log('goToProjectDetail', projectId);
     void this.router.navigate(['/projects', projectId]);
   }
 
@@ -97,14 +98,13 @@ export class HomeComponent {
       this.router.navigate(['/projects', projectId]);
       window.alert('プロジェクトに参加しました');
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : '参加に失敗しました';
+      const msg = e instanceof Error ? e.message : 'プロジェクトの参加に失敗しました';
       window.alert(msg);
     }
   }
 
   toggleMenu(event: MouseEvent, jp: JoinedProjectView): void {
     event.stopPropagation();
-  
     if (this.selectedProject?.id === jp.id) {
       this.isMenuOpen = !this.isMenuOpen;
     } else {
@@ -119,26 +119,47 @@ export class HomeComponent {
     this.isMenuOpen = false;
   }
 
-  onEdit() {
-    this.router.navigate(['/projects', this.selectedProject?.id, 'edit']);
-  }
-
-  onDelete() {
+  onEdit(event: MouseEvent) {
+    event.stopPropagation();
     if(!this.selectedProject) return;
-    this.homeFs.deleteProject(this.selectedProject.id);
+    console.log('onEdit');
+    this.router.navigate(['/projects', this.selectedProject.id, 'edit']);
   }
 
-  async onLeave() {
+  async onDelete(event: MouseEvent) {
+    event.stopPropagation();
+    if(!this.selectedProject) return;
+    try{
+    await this.homeFs.deleteProject(this.selectedProject.id);
+    this.refreshJoined$.next();
+    this.router.navigate(['/']);
+    window.alert('プロジェクトを削除しました');
+    } catch (error) {
+      window.alert('プロジェクトの削除に失敗しました')
+      console.error(error);
+    }
+  }
+
+  async onDrop(event: MouseEvent) {
+    event.stopPropagation();
     const user = await firstValueFrom(this.authService.user$);
-    this.homeFs.leaveProject(this.selectedProject?.id ?? '', user?.uid ?? '');
+    if(!this.selectedProject) return;
+    if(!user) return;
+    try{
+    console.log('onDrop');
+    this.homeFs.leaveProject(this.selectedProject.id, user.uid);
     this.refreshJoined$.next();
     this.router.navigate(['/']);
     window.alert('プロジェクトから脱退しました');
+    } catch (error) {
+      window.alert('プロジェクトの脱退に失敗しました')
+      console.error(error);
+    }
   }
 
   // ログアウト
-  async signout(): Promise<void> {
-    await this.authService.signout();
-    await this.router.navigate(['/signin']);
-  }
+  // async signout(): Promise<void> {
+  //   await this.authService.signout();
+  //   await this.router.navigate(['/signin']);
+  // }
 }

@@ -4,9 +4,11 @@ import {
   collection,
   collectionData,
   doc,
+  getDocs,
   docData,
   orderBy,
   getDoc,
+  updateDoc,
   setDoc,
   query,
   where,
@@ -15,7 +17,7 @@ import {
   serverTimestamp,
   deleteDoc,
 } from '@angular/fire/firestore';
-import { Observable, forkJoin, combineLatest, of, take, catchError } from 'rxjs';
+import { Observable, combineLatest, of } from 'rxjs';
 import { map, switchMap, tap } from 'rxjs/operators';
 import { Timestamp } from 'firebase/firestore';
 import {
@@ -61,7 +63,7 @@ function dueDateQueryBounds(now: Date = new Date()): { start: Date; end: Date } 
 /**
  * 表示用 dayLabel: 今日・明日は各日 00:00〜23:59:59.999 で判定
  */
-function dayLabelForDueDate(due: Timestamp | null, now: Date = new Date()): '今日' | '明日' | null {
+export function dayLabelForDueDate(due: Timestamp | null, now: Date = new Date()): '今日' | '明日' | null {
   if (!due) return null;
   const dueDate = due.toDate();
   const todayStart = startOfLocalDay(now);
@@ -73,14 +75,14 @@ function dayLabelForDueDate(due: Timestamp | null, now: Date = new Date()): '今
   return null;
 }
 
-// 優先度の並び順を数値に変換する。緊急→「0」
+// 優先度の並び順を数値に変換する。緊急→「0」、未入力などは一番後ろになる
 function priorityIndex(p: string): number {
   const i = PRIORITY_ORDER.indexOf(p as (typeof PRIORITY_ORDER)[number]);
   return i === -1 ? PRIORITY_ORDER.length : i;
 }
 
 /** 1.今日 2.明日 3.priority 4.createdAt 昇順 */
-function compareHomeTasks(a: HomeTaskRow, b: HomeTaskRow): number {
+export function compareHomeTasks(a: HomeTaskRow, b: HomeTaskRow): number {
   const dayRank = (x: HomeTaskRow) => (x.dayLabel === '今日' ? 0 : 1);
   const byDay = dayRank(a) - dayRank(b);
   if (byDay !== 0) return byDay;
@@ -90,7 +92,7 @@ function compareHomeTasks(a: HomeTaskRow, b: HomeTaskRow): number {
 }
 
 // タスクを表示用のオブジェクトに変換する。
-function toHomeRows(docs: (TaskDoc & { id: string })[]): HomeTaskRow[] {
+export function toHomeRows(docs: (TaskDoc & { id: string })[]): HomeTaskRow[] {
   const now = new Date();
   return docs
     .map((d) => {
@@ -113,7 +115,7 @@ export class HomeFirestoreService {
     return docData(ref, { idField: 'id' });
   }
 
-  /** assignedid == uid かつ dueDate が今日〜明日（範囲クエリ） */
+  /** assignedid == uid かつ dueDate が今日〜明日（範囲クエリ）かつ順番通りに並び替え */
   homeTasks$(uid: string): Observable<HomeTaskRow[]> {
     const { start, end } = dueDateQueryBounds();
     const tasksRef = collection(this.firestore, 'tasks');
@@ -159,10 +161,10 @@ export class HomeFirestoreService {
     //   switchMap((snap) => {
     //     const ids = [...new Set(snap.docs.map((d) => d.ref.parent.parent!.id))];
       return collectionData(q).pipe(
-        tap(members => console.log('members:', members)),
+        // tap(members => console.log('members:', members)),
         switchMap((members: any[]) => {
           const ids = [...new Set(members.map(m => m.projectid))];
-          console.log('ids:', ids);
+          // console.log('ids:', ids);
         if (ids.length === 0) return of([]);
         return combineLatest(
           ids.map((id) => this.getProjectDoc$(id)),
@@ -207,17 +209,48 @@ export class HomeFirestoreService {
   /** プロジェクトを削除 */
   async deleteProject(projectid: string): Promise<void> {
     if(confirm('プロジェクトを削除しますか？')) {
+    try{
+    // メンバーを削除
+    const membersRef = collection(this.firestore, 'projects', projectid, 'members');
+    const membersSnap = await getDocs(membersRef);
+    await Promise.all(membersSnap.docs.map(docSnap => deleteDoc(docSnap.ref)));
+    // for (const member of membersSnap.docs) {
+    //   await deleteDoc(doc(this.firestore, 'projects', projectid, 'members', member.id));
+    // }
+
+    // タスクを削除
+    const tasksRef = collection(this.firestore, 'tasks');
+    const q = query(tasksRef, where('projectid', '==', projectid));
+    const tasksSnap = await getDocs(q);
+    await Promise.all(tasksSnap.docs.map(docSnap => deleteDoc(docSnap.ref)));
+
+    // プロジェクトを削除
     const projRef = doc(this.firestore, 'projects', projectid);
     await deleteDoc(projRef);
-    window.alert('プロジェクトを削除しました');
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
     }
   }
 
   /** プロジェクトを脱退 */
   async leaveProject(projectid: string, uid: string): Promise<void> {
     if(confirm('プロジェクトから脱退しますか？')) {
+    try{
+    // assignedname及びassignedidがnullに変更する
+    const tasksRef = collection(this.firestore, 'tasks');
+    const q = query(tasksRef, where('projectid', '==', projectid), where('assignedid', '==', uid));
+    const tasksSnap = await getDocs(q);
+    await Promise.all(tasksSnap.docs.map(docSnap => updateDoc(docSnap.ref, { assignedname: null, assignedid: null })));
+
+    // メンバーを削除
     const memberRef = doc(this.firestore, 'projects', projectid, 'members', uid);
     await deleteDoc(memberRef);
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
     }
   }
 }

@@ -1,3 +1,9 @@
+header {
+    border-bottom: 1px solid #ccc;
+    /* padding: 10px 20px; */
+}
+
+
 h1{
     font-size: 20px;
     margin: 0;
@@ -14,4 +20,38 @@ h1{
 
 button{
     cursor: pointer;
+}
+
+
+.menu-wrapper {
+    position: absolute;
+    right: 10px;
+    top: 0%;
+}
+
+.menu-trigger {
+    margin-top: 5px;
+    font-size: 25px;
+    cursor: pointer;
+}
+
+.menu {
+    position: absolute;
+    right: 100%;
+    top: 0%;
+    margin-right: 0px;
+    background: white;
+    border: 1px solid #ccc;
+    width: 100px;
+    z-index: 1000;
+    cursor: pointer;
+}
+
+.menu-item {
+    padding: 6px 10px;
+    cursor: pointer;
+}
+
+.menu-item:hover {
+    background: #eee;
 }

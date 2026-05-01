@@ -1,8 +1,19 @@
-body {
-    min-height: 100vh;          /* 画面の高さを使う */
+header {
+    width: 80%;
+    margin: auto;
     display: flex;
-       /* 横中央 */
-    align-items: center;        /* 縦中央 */
+    justify-content: flex-end;
+}
+
+.delete-button {
+    cursor: pointer;
+    font-size: 16px;
+}
+
+body {
+    min-height: 100vh;
+    /* display: flex;
+    align-items: center;  */
     margin: 0;                  
 }
 
@@ -31,20 +42,13 @@ textarea {
     font-size: 16px;
 }
 
-button[type="cancel"] {
-    background-color: #e4e3e3 ;
-    border: none;
-    border-radius: 5px;
-    padding: 5px;
+button[type="button"] {
     cursor: pointer;
     margin-left: 90px;
     font-size: 16px;
 }
 
 button[type="submit"] {
-    /* background-color: #e4e3e3 ;
-    border: none;
-    border-radius: 5px; */
     padding: 5px;
     cursor: pointer;
 }

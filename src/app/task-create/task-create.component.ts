@@ -10,7 +10,6 @@ import { FormStateService } from '../shares/FormStateService';
 import { toHiragana } from 'wanakana';
 import { toTimestamp } from '../shares/utiles';
 import { MemberDoc } from '../models/models';
-import { CanComponentDeactivate } from '../shares/clear-session.guard';
 
 @Component({
   selector: 'app-task-create',
@@ -20,7 +19,7 @@ import { CanComponentDeactivate } from '../shares/clear-session.guard';
   styleUrl: './task-create.component.css',
 })
 
-export class TaskCreateComponent implements CanComponentDeactivate {
+export class TaskCreateComponent {
   projectId!: string;
   key!: string;
   vm$!: Observable<{ user: any | null; members: any[] }>;
@@ -91,13 +90,13 @@ watchMembers() {
 
   task_create_form = this.fb.group({
     title: ['', [trimRequired, Validators.maxLength(50)]],
-    description: ['', [trimRequired, Validators.maxLength(500)]],
+    description: ['', [Validators.maxLength(500)]],
     dueDate: ['', [Validators.required]],
-    priority: ['', [Validators.required]],
-    status: ['', [Validators.required]],
-    assignedid: ['', [Validators.required]],
-    approach: ['', [trimRequired, Validators.maxLength(100)]],
-    completioncriteria: ['', [trimRequired, Validators.maxLength(100)]],
+    priority: ['', []],
+    status: ['', []],
+    assignedid: ['', []],
+    approach: ['', [Validators.maxLength(100)]],
+    completioncriteria: ['', [Validators.maxLength(100)]],
   });
 
   descLength$ = this.task_create_form.get('description')!.valueChanges.pipe(
@@ -111,6 +110,7 @@ watchMembers() {
     startWith(0));
 
   async createTask() {
+    try{
     const u = await firstValueFrom(this.authService.user$.pipe(take(1)));
     if (!u) {
       window.alert('ログインしてください');
@@ -131,14 +131,14 @@ watchMembers() {
       title: raw.title,
       title_kana: title_kana,
       projectid: this.projectId,
-      description: raw.description,
+      description: raw.description ?? '',
       dueDate: toTimestamp(raw.dueDate ?? null),
-      priority: raw.priority?.trim(),
-      status: raw.status?.trim(),
-      assignedid: raw.assignedid?.trim(),
-      assignedname: assignedname,
-      approach: raw.approach?.trim(),
-      completioncriteria: raw.completioncriteria?.trim(),
+      priority: raw.priority?.trim() ?? '',
+      status: raw.status?.trim() ?? '',
+      assignedid: raw.assignedid?.trim() ?? '',
+      assignedname: assignedname ?? '',
+      approach: raw.approach?.trim() ?? '',
+      completioncriteria: raw.completioncriteria?.trim() ?? '',
       createdBy: u.uid,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
@@ -151,14 +151,19 @@ watchMembers() {
     this.formState.clear(this.key);
 
     window.alert('課題を作成しました');
+  } catch (error) {
+    window.alert('課題の作成に失敗しました')
+    console.error(error);
   }
+}
 
   onCancel() {
     this.formState.clear(this.key);
     this.router.navigate(['/projects', this.projectId]);
   }
 
-  onLeave(): void {
+  ngOnDestroy(): void {
+    console.log('onDestroy');
     this.formState.clear(this.key);
   }
 }

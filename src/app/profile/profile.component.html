@@ -1,0 +1,14 @@
+<header>
+</header>
+<body>
+<div class="profile-container">
+  <form [formGroup]="profile_form" (ngSubmit)="profileEdit()" >
+    <label>ユーザー名</label>
+    <input type="text" formControlName="displayname">
+    <div class="button-container">
+      <button type="submit" [disabled]="profile_form.invalid">保存</button>
+      <button type="button" (click)="onCancel()">キャンセル</button>
+    </div>
+  </form>
+</div>
+</body>

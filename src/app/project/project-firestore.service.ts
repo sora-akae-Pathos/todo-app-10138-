@@ -5,6 +5,8 @@ import {
   collectionData,
   doc,
   docData,
+  getDocs,
+  updateDoc,
   query,
   where,
   deleteDoc,
@@ -73,11 +75,26 @@ export class ProjectFirestoreService {
   }
 
   // プロジェクトを削除
-  async deleteProject(projectId: string): Promise<void> {
+  async deleteProject(projectid: string): Promise<void> {
     if(confirm('プロジェクトを削除しますか？')) {
-      await deleteDoc(doc(this.firestore, 'projects', projectId));
-      window.alert('プロジェクトを削除しました');
-    }
+      try{
+        // メンバーを削除
+        const membersRef = collection(this.firestore, 'projects', projectid, 'members');
+        const membersSnap = await getDocs(membersRef);
+        await Promise.all(membersSnap.docs.map(docSnap => deleteDoc(docSnap.ref)));
 
+        // タスクを削除
+        const tasksRef = collection(this.firestore, 'tasks');
+        const q = query(tasksRef, where('projectid', '==', projectid));
+        const tasksSnap = await getDocs(q);
+        await Promise.all(tasksSnap.docs.map(docSnap => deleteDoc(docSnap.ref)));
+
+        // プロジェクトを削除
+        await deleteDoc(doc(this.firestore, 'projects', projectid));
+      } catch (error) {
+        console.error(error);
+        throw error;
+      }
+    }
   }
 }
