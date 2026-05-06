@@ -1,1 +1,16 @@
-{}
+{
+  "hosting": {
+    "public": "dist/todo-app-10138-v20/browser",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  }
+}

@@ -4,8 +4,8 @@ import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { CommonModule, Location } from '@angular/common';
 import { trimRequired, noWhitespace } from '../shares/custom-validators';
 import { AuthService } from '../auth/auth.service';
-import { firstValueFrom, take, debounceTime, Observable } from 'rxjs';
-import { updateDoc, doc, docData, deleteDoc, serverTimestamp, Firestore, DocumentReference } from '@angular/fire/firestore';
+import { firstValueFrom, take, debounceTime, Observable, Subject, takeUntil, distinctUntilChanged } from 'rxjs';
+import { doc, docData, Firestore, DocumentReference } from '@angular/fire/firestore';
 import { FormStateService } from '../shares/FormStateService';
 import { toHiragana } from 'wanakana';
 import { ProjectDoc } from '../models/home.models';
@@ -24,7 +24,9 @@ export class ProjectEditComponent {
   project$!: Observable<ProjectDoc>;
   project!: ProjectDoc;
   projectRef!: DocumentReference;
+  loadingState: 'idle' | 'saving' | 'deleting' = 'idle';
   private isSavingEnabled = true;
+  private isInitialValue = true;
 
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
@@ -34,6 +36,8 @@ export class ProjectEditComponent {
   private formState = inject(FormStateService);
   private location = inject(Location);
   private peService = inject(ProjectEditService);
+
+  private destroy$ = new Subject<void>();
 
 
   // get name(): FormControl {
@@ -58,35 +62,44 @@ export class ProjectEditComponent {
     this.project$ = docData(this.projectRef) as Observable<ProjectDoc>;
     const saved = this.formState.load<any>(this.key);
      // 初期ロードフラグ
-    let initialValue = true;
+    this.isInitialValue = true;
 
      // DB取得 → フォーム反映（セッション優先）
-    this.project$.subscribe(project => {
-      if (!project) return;
-      console.log(project);
-      this.project = project;
+    this.project$
+      .pipe(
+        takeUntil(this.destroy$)
+      )
+      .subscribe(project => {
+        if (!project) return;
+        console.log(project);
+        this.project = project;
 
-      const data = saved ?? {
-        name: project?.name,
-        phrase: project?.phrase,
-      };
+        const data = saved ?? {
+          name: project?.name,
+          phrase: project?.phrase,
+        };
 
-      this.project_edit_form.patchValue(data);
+        this.project_edit_form.patchValue(data);
 
-      initialValue = false;
-    });
+        this.isInitialValue = false;
+      });
 
     // フォーム変更 → セッション保存
-  this.project_edit_form.valueChanges
-  .pipe(debounceTime(300))
-  .subscribe(value => {
-    if (initialValue || !this.isSavingEnabled) return;
-    this.formState.save(this.key, value);
-  });
+    this.project_edit_form.valueChanges
+      .pipe(
+        debounceTime(300),
+        distinctUntilChanged(
+          (prev, curr) => JSON.stringify(prev) === JSON.stringify(curr)
+        ),
+        takeUntil(this.destroy$)
+      )
+      .subscribe(value => {
+        if (this.isInitialValue || !this.isSavingEnabled) return;
+        this.formState.save(this.key, value);
+    });
   }
 
   async editProject() {
-    try {
     const u = await firstValueFrom(this.authService.user$.pipe(take(1)));
     if (!u) {
       window.alert('ログインしてください');
@@ -97,6 +110,8 @@ export class ProjectEditComponent {
 
     if (this.project_edit_form.invalid) return;
 
+    this.loadingState = 'saving';
+    try {
     const raw = this.project_edit_form.value;
 
     const name = raw.name?.trim();
@@ -124,6 +139,9 @@ export class ProjectEditComponent {
     } catch (error) {
       window.alert('プロジェクトの更新に失敗しました')
       console.error(error);
+    } finally {
+      this.loadingState = 'idle';
+      console.log('loadingState', this.loadingState);
     }
   }
 
@@ -139,7 +157,8 @@ export class ProjectEditComponent {
 
   async deleteProject() {
     if(!this.projectId) return;
-      try{
+    this.loadingState = 'deleting';
+    try{
         await this.peService.deleteProject(this.projectId);
         if(window.history.length > 1) {
           this.location.back();
@@ -149,11 +168,17 @@ export class ProjectEditComponent {
         window.alert('プロジェクトを削除しました');
       } catch (error) {
         window.alert('プロジェクトの削除に失敗しました')
-    }
+        console.error(error);
+      } finally {
+        this.loadingState = 'idle';
+        console.log('loadingState', this.loadingState);
+      }
   }
 
   ngOnDestroy(): void {
     console.log('onDestroy');
     this.formState.clear(this.key);
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }

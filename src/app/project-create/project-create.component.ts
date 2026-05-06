@@ -4,7 +4,7 @@ import { Router, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { trimRequired, noWhitespace } from '../shares/custom-validators';
 import { AuthService } from '../auth/auth.service';
-import { firstValueFrom, take, debounceTime } from 'rxjs';
+import { firstValueFrom, take, debounceTime, Subject, takeUntil } from 'rxjs';
 import { getDoc, setDoc, doc, addDoc, collection, serverTimestamp, Firestore } from '@angular/fire/firestore';
 import { FormStateService } from '../shares/FormStateService';
 import { toHiragana } from 'wanakana';
@@ -18,12 +18,15 @@ import { toHiragana } from 'wanakana';
 })
 export class ProjectCreateComponent {
   key!: string;
+  loading = false;
 
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
   private firestore = inject(Firestore);
   private router = inject(Router);
   private formState = inject(FormStateService);
+
+  private destroy$ = new Subject<void>();
 
   get name(): FormControl {
     return this.project_create_form.get('name') as FormControl;
@@ -41,7 +44,8 @@ export class ProjectCreateComponent {
 
     this.project_create_form.valueChanges
     .pipe(
-      debounceTime(300)
+      debounceTime(300),
+      takeUntil(this.destroy$)
     )
     .subscribe(value => {
       const filteredValue = {
@@ -50,8 +54,6 @@ export class ProjectCreateComponent {
       };
       this.formState.save(this.key, filteredValue);
       console.log(filteredValue);
-    // this.project_create_form.valueChanges.subscribe(value => {
-    //   this.formState.save('project_create_form', value);
     });
   }
 
@@ -61,14 +63,16 @@ export class ProjectCreateComponent {
   });
 
   async createProject() {
-    try{
     const u = await firstValueFrom(this.authService.user$.pipe(take(1)));
     if (!u) {
       window.alert('ログインしてください');
       return;
     }
+    
     if (this.project_create_form.invalid) return;
 
+    this.loading = true;
+    try{
     const raw = this.project_create_form.value;
 
     const name = raw.name?.trim();
@@ -104,6 +108,9 @@ export class ProjectCreateComponent {
   } catch (error) {
     window.alert('プロジェクトの作成に失敗しました')
     console.error(error);
+  } finally {
+    this.loading = false;
+    console.log('loading', this.loading);
   }
 }
 
@@ -114,6 +121,8 @@ export class ProjectCreateComponent {
 
   ngOnDestroy(): void {
     console.log('onDestroy');
+    this.destroy$.next();
+    this.destroy$.complete();
     this.formState.clear(this.key);
   }
 }

@@ -3,10 +3,11 @@ import { CommonModule } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Observable, of, Subject, merge, firstValueFrom, take } from 'rxjs';
-import { debounceTime, distinctUntilChanged, switchMap, tap } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, switchMap, tap, map, startWith } from 'rxjs/operators';
 import { AuthService } from '../auth/auth.service';
 import { HomeFirestoreService } from './home-firestore.service';
 import { HomeTaskRow, JoinedProjectView, ProjectSearchHit } from '../models/home.models';
+
 
 @Component({
   selector: 'app-home',
@@ -17,7 +18,10 @@ import { HomeTaskRow, JoinedProjectView, ProjectSearchHit } from '../models/home
 })
 export class HomeComponent {
   selectedProject: ProjectSearchHit | null = null;
+  selectedJoinedProject: JoinedProjectView | null = null;
   isMenuOpen: boolean = false;
+  loadingState: 'idle' | 'dropping' | 'deleting' = 'idle';
+
 
   private readonly authService = inject(AuthService);
   private readonly homeFs = inject(HomeFirestoreService);
@@ -27,6 +31,7 @@ export class HomeComponent {
 
   readonly projectSearch = new FormControl('', { nonNullable: true });
   readonly joinPhrase = new FormControl('', { nonNullable: true });
+  readonly joinedProjectSearch = new FormControl('', { nonNullable: true });
 
   // 今日・明日のタスクを取得
   readonly tasks$: Observable<HomeTaskRow[]> = this.authService.user$.pipe(
@@ -46,10 +51,32 @@ export class HomeComponent {
   );
 
   // プロジェクト検索結果を取得
-  readonly searchResults$: Observable<ProjectSearchHit[]> = this.projectSearch.valueChanges.pipe(
+  readonly searchResults$: Observable<ProjectSearchHit[] | null> = this.projectSearch.valueChanges.pipe(
     debounceTime(200),
     distinctUntilChanged(),
-    switchMap((v) => this.homeFs.searchProjectsByName$(v)),
+    map(v => (v ?? '').trim()),
+    switchMap((v) => {
+      if (!v) return of(null);
+      return this.homeFs.searchProjectsByName$(v);
+    }),
+  );
+
+  // 参加中プロジェクト一覧を検索
+  readonly filteredProjects$: Observable<JoinedProjectView[]> = this.joinedProjectSearch.valueChanges.pipe(
+    startWith(''),
+    debounceTime(200),
+    map(v => (v ?? '').trim().toLowerCase()),
+    switchMap(keyword =>
+      this.joinedProjects$.pipe(
+        map(projects => {
+          if (!keyword) return projects;
+  
+          return projects.filter(p =>
+            p.name.toLowerCase().includes(keyword)
+          );
+        })
+      )
+    )
   );
 
   // プロジェクト詳細画面に遷移
@@ -98,8 +125,16 @@ export class HomeComponent {
       this.router.navigate(['/projects', projectId]);
       window.alert('プロジェクトに参加しました');
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : 'プロジェクトの参加に失敗しました';
-      window.alert(msg);
+      if(e instanceof Error && e.message === '合言葉が一致しません') {
+        window.alert('合言葉が一致しません');
+        return;
+      }else if(e instanceof Error && e.message === 'プロジェクトが見つかりません') {
+        window.alert('プロジェクトが見つかりません');
+        return;
+      }else {
+        const msg = e instanceof Error ? e.message : 'プロジェクトの参加に失敗しました';
+        window.alert(msg);
+      }
     }
   }
 
@@ -129,6 +164,7 @@ export class HomeComponent {
   async onDelete(event: MouseEvent) {
     event.stopPropagation();
     if(!this.selectedProject) return;
+    this.loadingState = 'deleting';
     try{
     await this.homeFs.deleteProject(this.selectedProject.id);
     this.refreshJoined$.next();
@@ -138,6 +174,9 @@ export class HomeComponent {
       window.alert('プロジェクトの削除に失敗しました')
       console.error(error);
     }
+    finally {
+      this.loadingState = 'idle';
+    }
   }
 
   async onDrop(event: MouseEvent) {
@@ -145,15 +184,19 @@ export class HomeComponent {
     const user = await firstValueFrom(this.authService.user$);
     if(!this.selectedProject) return;
     if(!user) return;
+    this.loadingState = 'dropping';
     try{
     console.log('onDrop');
-    this.homeFs.leaveProject(this.selectedProject.id, user.uid);
+    await this.homeFs.leaveProject(this.selectedProject.id, user.uid);
     this.refreshJoined$.next();
     this.router.navigate(['/']);
     window.alert('プロジェクトから脱退しました');
     } catch (error) {
       window.alert('プロジェクトの脱退に失敗しました')
       console.error(error);
+    }
+    finally {
+      this.loadingState = 'idle';
     }
   }
 

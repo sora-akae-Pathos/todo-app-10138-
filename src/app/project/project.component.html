@@ -5,8 +5,21 @@
     <button type="button" class="logout-button" (click)="signout()">ログアウト</button>
     </div> -->
     <div class="title-row">
-    <h1 class="title">{{ vm.projectName ?? 'プロジェクト' }}</h1>
-    <button type="button" class="delete-project-button" (click)="deleteProject()">プロジェクトを削除</button>
+      <h1 class="title">{{ vm.projectName ?? 'プロジェクト' }}</h1>
+      <div class="menu-wrapper" >
+        <span class="menu-trigger" (click)="toggleMenu($event)">︙</span>
+        <div class="menu" *ngIf="isMenuOpen" >
+          <div class="menu-item" (click)="onEdit()">編集</div>
+          <div class="menu-item" (click)="onDelete()">削除</div>
+          <div class="menu-item" (click)="onDrop()">脱退</div>
+        </div>
+      </div>
+      <div *ngIf="loadingState === 'dropping'">
+        <div class="loading">プロジェクトを脱退しています...</div>
+      </div>
+      <div *ngIf="loadingState === 'deleting'">
+        <div class="loading">プロジェクトを削除しています...</div>
+      </div>
     </div>
   </header>
 

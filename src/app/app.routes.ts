@@ -10,13 +10,13 @@ import { TaskCreateComponent } from './task-create/task-create.component';
 import { ProjectEditComponent } from './project-edit/project-edit.component';
 import { LayoutComponent } from './layout/layout.component';
 import { ProfileComponent } from './profile/profile.component';
-import { ClearSessionGuard } from './shares/clear-session.guard';
 
 export const routes: Routes = [
 {
     path: '',
     component: LayoutComponent,
     children: [
+{ path: 'profile', canActivate:[authGuard], component: ProfileComponent },
 { path: 'projects/create', canActivate:[authGuard], component: ProjectCreateComponent },
 { path: 'projects/:projectId/edit', canActivate:[authGuard], component: ProjectEditComponent },
 { path: 'projects/:projectId/tasks/create', canActivate:[authGuard], component: TaskCreateComponent },
@@ -24,7 +24,6 @@ export const routes: Routes = [
 { path: 'tasks/:taskId', canActivate: [authGuard], component: TaskDetailComponent },
 { path: '', canActivate:[authGuard],component: HomeComponent},
 { path: 'projects/:projectId', canActivate:[authGuard], component: ProjectComponent },
-{ path: 'profile', canActivate:[authGuard], component: ProfileComponent },
 ]},
 { path: 'signin', component: SignInComponent },
 { path: 'signup', component: SignUpComponent },
