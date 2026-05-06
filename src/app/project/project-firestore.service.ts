@@ -97,4 +97,24 @@ export class ProjectFirestoreService {
       }
     }
   }
+
+  // プロジェクトから脱退
+  async leaveProject(projectid: string, uid: string): Promise<void> {
+    if(confirm('プロジェクトから脱退しますか？')) {
+    try{
+    // assignedname及びassignedidがnullに変更する
+    const tasksRef = collection(this.firestore, 'tasks');
+    const q = query(tasksRef, where('projectid', '==', projectid), where('assignedid', '==', uid));
+    const tasksSnap = await getDocs(q);
+    await Promise.all(tasksSnap.docs.map(docSnap => updateDoc(docSnap.ref, { assignedname: null, assignedid: null })));
+
+    // メンバーを削除
+    const memberRef = doc(this.firestore, 'projects', projectid, 'members', uid);
+    await deleteDoc(memberRef);
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+    }
+  }
 }

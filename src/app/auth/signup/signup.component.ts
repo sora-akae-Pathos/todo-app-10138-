@@ -6,7 +6,6 @@ import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../auth.service';
 import { trimRequired, noWhitespace, passwordMismatch } from '../../shares/custom-validators';
 import { FormStateService } from '../../shares/FormStateService';
-import { CanComponentDeactivate } from '../../shares/clear-session.guard';
 import { debounceTime } from 'rxjs';
 
 type UserField = 'username' | 'email';
@@ -19,7 +18,7 @@ type UserField = 'username' | 'email';
   styleUrl:'./signup.component.css'
 })
 
-export class SignUpComponent implements CanComponentDeactivate {
+export class SignUpComponent {
   key!: string;
   errorMessage: string = '';
 
@@ -137,7 +136,7 @@ async isEmailTaken(email: string): Promise<boolean> {
       this.errorMessage = error.message;
     }
   }
-  onLeave(): void {
-    this.formState.clear(this.key);
-  }
+  // onLeave(): void {
+  //   this.formState.clear(this.key);
+  // }
 }

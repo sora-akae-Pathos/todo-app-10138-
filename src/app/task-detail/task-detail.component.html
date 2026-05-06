@@ -1,16 +1,28 @@
 <header>
-  <button class="delete-button" (click)="deleteTask()">削除</button>
+  <button class="delete-button" (click)="deleteTask()" [disabled]="loadingState === 'deleting' || loadingState === 'saving'">削除</button>
 </header>
 <body>
 <div class="task-detail-container">
   <form [formGroup]="task_detail_form" (ngSubmit)="taskEdit()" >
     <label>課題名称</label>
     <input type="text" placeholder="50文字以内" formControlName="title">
+    <div class="error-message" *ngIf = "task_detail_form.get('title')?.errors?.['required'] && task_detail_form.get('title')?.touched">
+      課題名称を入力してください
+    </div>
+    <div class="error-message" *ngIf = "task_detail_form.get('title')?.errors?.['maxlength'] && task_detail_form.get('title')?.touched">
+      50文字以内で入力してください
+    </div>
     <label>詳細な内容</label>
     <textarea placeholder="500文字以内" formControlName="description"></textarea>
     <div>{{descLength$ | async}}/500</div>
+    <div class="error-message" *ngIf = "task_detail_form.get('description')?.errors?.['maxlength'] && task_detail_form.get('description')?.touched">
+      500文字以内で入力してください
+    </div>
     <label>期限</label>
     <input type="date" formControlName="dueDate">
+    <div class="error-message" *ngIf = "task_detail_form.get('dueDate')?.errors?.['required'] && task_detail_form.get('dueDate')?.touched">
+      期限を入力してください
+    </div>
     <label>優先度</label>
     <select formControlName="priority">
       <option value="緊急">緊急</option>
@@ -39,13 +51,25 @@
     <label>対応方法</label>
     <textarea placeholder="100文字以内" formControlName="approach"></textarea>
     <div>{{apLength$ | async}}/100</div>
+    <div class="error-message" *ngIf = "task_detail_form.get('approach')?.errors?.['maxlength'] && task_detail_form.get('approach')?.touched">
+      100文字以内で入力してください
+    </div>
     <label>完了条件</label>
     <textarea placeholder="100文字以内" formControlName="completioncriteria"></textarea>
     <div>{{compLength$ | async}}/100</div>
+    <div class="error-message" *ngIf = "task_detail_form.get('completioncriteria')?.errors?.['maxlength'] && task_detail_form.get('completioncriteria')?.touched">
+      100文字以内で入力してください
+    </div>
     <div class="button-container">
-    <button type="submit" [disabled]="task_detail_form.invalid">保存</button>
-    <button type="button" (click)="onCancel()">キャンセル</button>
+    <button type="submit" [disabled]="task_detail_form.invalid || loadingState === 'saving' || loadingState === 'deleting'">保存</button>
+    <button type="button" (click)="onCancel()" [disabled]="loadingState === 'saving' || loadingState === 'deleting'">キャンセル</button>
     </div>
   </form>
+  <div *ngIf="loadingState === 'saving'">
+    <div class="loading">課題を更新しています...</div>
+  </div>
+  <div *ngIf="loadingState === 'deleting'">
+    <div class="loading">課題を削除しています...</div>
+  </div>
 </div>
 </body>

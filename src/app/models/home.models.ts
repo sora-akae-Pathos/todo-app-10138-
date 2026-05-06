@@ -9,6 +9,7 @@ export type TaskPriority = (typeof PRIORITY_ORDER)[number];
 
 export type TaskStatus = (typeof STATUS_ORDER)[number];
 
+
 /** Firestore tasks/{taskId} */
 export interface TaskDoc {
   projectid: string;

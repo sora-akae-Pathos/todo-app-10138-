@@ -54,3 +54,8 @@ input[type="text"] {
     margin-bottom: 10px;
     font-size: 16px;
 }
+
+.error-message {
+    color: red;
+    font-size: 14px;
+}

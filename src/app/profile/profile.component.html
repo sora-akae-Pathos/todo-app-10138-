@@ -3,12 +3,18 @@
 <body>
 <div class="profile-container">
   <form [formGroup]="profile_form" (ngSubmit)="profileEdit()" >
+    <div *ngIf="user$ | async as user">
+      現在の表示名：{{ user.displayname }}
+    </div>
     <label>ユーザー名</label>
     <input type="text" formControlName="displayname">
     <div class="button-container">
-      <button type="submit" [disabled]="profile_form.invalid">保存</button>
-      <button type="button" (click)="onCancel()">キャンセル</button>
+      <button type="submit" [disabled]="profile_form.invalid || loadingState === 'saving'">保存</button>
+      <button type="button" (click)="onCancel()" [disabled]="loadingState === 'saving'">キャンセル</button>
     </div>
   </form>
+  <div *ngIf="loadingState === 'saving'">
+    <div class="loading">プロフィールを更新しています...</div>
+  </div>
 </div>
 </body>

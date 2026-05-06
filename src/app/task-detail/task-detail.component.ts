@@ -1,14 +1,13 @@
 import { Component, inject } from '@angular/core';
-import { FormBuilder, FormControl, Validators, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterModule, ActivatedRoute } from '@angular/router';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { trimRequired, noWhitespace } from '../shares/custom-validators';
 import { AuthService } from '../auth/auth.service';
-import { firstValueFrom, take, debounceTime, Observable, combineLatest, map, startWith, switchMap } from 'rxjs';
+import { firstValueFrom, take, debounceTime, Observable, combineLatest, map, startWith, switchMap, Subject, takeUntil, distinctUntilChanged } from 'rxjs';
 import { doc, updateDoc, collection, serverTimestamp, Firestore, collectionData, DocumentReference, docData, deleteDoc } from '@angular/fire/firestore';
 import { FormStateService } from '../shares/FormStateService';
 import { toHiragana } from 'wanakana';
-import { Location } from '@angular/common';
 import { TaskDoc } from '../models/home.models';
 import { toDateInputString, toTimestamp } from '../shares/utiles';
 import { MemberDoc } from '../models/models';
@@ -28,6 +27,7 @@ export class TaskDetailComponent {
   taskRef!: DocumentReference;
   projectId!: string;
   vm$!: Observable<{ user: any | null; members: any[] }>;
+  loadingState: 'idle' | 'saving' | 'deleting' = 'idle';
 
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
@@ -37,7 +37,10 @@ export class TaskDetailComponent {
   private formState = inject(FormStateService);
   private location = inject(Location);
   // private taskDetailService = inject(TaskDetailService);
+
   private isSavingEnabled = true;
+  private isInitialValue = true;
+  private destroy$ = new Subject<void>();
 
   task_detail_form = this.fb.group({
     title: ['', [trimRequired, Validators.maxLength(50)]],
@@ -62,10 +65,12 @@ export class TaskDetailComponent {
     const saved = this.formState.load<any>(this.key);
 
     // 初期ロードフラグ
-    let initialValue = true;
+    this.isInitialValue = true;
 
      // DB取得 → フォーム反映（セッション優先）
-    this.task$.subscribe(task => {
+    this.task$
+    .pipe(takeUntil(this.destroy$))
+    .subscribe(task => {
     this.task = task;
 
     const data = saved ?? {
@@ -80,17 +85,23 @@ export class TaskDetailComponent {
       completioncriteria: task?.completioncriteria ?? '',
     };
 
+    this.isInitialValue = true;
     this.task_detail_form.patchValue(data);
-
-    initialValue = false;
+    this.isInitialValue = false;
     
   });
 
   // フォーム変更 → セッション保存
   this.task_detail_form.valueChanges
-    .pipe(debounceTime(300))
+    .pipe(
+      debounceTime(300),
+      distinctUntilChanged(
+        (prev, curr) => JSON.stringify(prev) === JSON.stringify(curr)
+      ),
+      takeUntil(this.destroy$)
+    )
     .subscribe(value => {
-      if (initialValue || !this.isSavingEnabled) return;
+      if (this.isInitialValue || !this.isSavingEnabled) return;
       this.formState.save(this.key, value);
       console.log(value);
     });
@@ -133,7 +144,6 @@ watchMembers() {
     startWith(0));
 
   async taskEdit() {
-    try{
     const u = await firstValueFrom(this.authService.user$.pipe(take(1)));
     if (!u) {
       window.alert('ログインしてください');
@@ -141,6 +151,8 @@ watchMembers() {
     }
     if (this.task_detail_form.invalid) return;
 
+    this.loadingState = 'saving';
+    try{
     const raw = this.task_detail_form.value;
     const title_kana = toHiragana(raw.title ?? '');
 
@@ -195,10 +207,13 @@ watchMembers() {
     console.log(this.key);
 
     window.alert('課題を更新しました');
-} catch (error) {
-  window.alert('課題の更新に失敗しました')
-  console.error(error);
-}
+    } catch (error) {
+      window.alert('課題の更新に失敗しました')
+      console.error(error);
+    } finally {
+      this.loadingState = 'idle';
+      console.log('loadingState', this.loadingState);
+    }
 }
 
   onCancel() {
@@ -212,6 +227,7 @@ watchMembers() {
 
   async deleteTask() {
     if(confirm('課題を削除しますか？')) {
+      this.loadingState = 'deleting';
       try{
       await deleteDoc(this.taskRef);
       this.formState.clear(this.key);
@@ -224,6 +240,9 @@ watchMembers() {
     } catch (error) {
       window.alert('課題の削除に失敗しました')
       console.error(error);
+    } finally {
+      this.loadingState = 'idle';
+      console.log('loadingState', this.loadingState);
     }
     }
   }
@@ -231,6 +250,7 @@ watchMembers() {
   ngOnDestroy(): void {
     console.log('onDestroy');
     this.formState.clear(this.key);
+    this.destroy$.next();
+    this.destroy$.complete();
   }
-  
 }

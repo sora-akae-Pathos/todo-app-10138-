@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -14,6 +14,7 @@ import {
   TaskStatusGroup,
 } from './project.models';
 import { AuthService } from '../auth/auth.service';
+
 
 const PRIORITY_RANK: Record<string, number> = {
   緊急: 0,
@@ -39,7 +40,7 @@ function pr(p: string): number {
   return PRIORITY_RANK[p] ?? 99;
 }
 
-/** 単一キー。デフォルトは dueDate 昇順、同一は createdAt 昇順 */
+//  単一キー。デフォルトは dueDate 昇順、同一は createdAt 昇順
 function compareBySortKey(a: ProjectTaskView, b: ProjectTaskView, key: ProjectSortKey): number {
   switch (key) {
     case 'dueDate': {
@@ -67,7 +68,7 @@ function compareBySortKey(a: ProjectTaskView, b: ProjectTaskView, key: ProjectSo
   }
 }
 
-/** 1.フィルタ 2.検索 3.ソート → グルーピング */
+//  1.フィルタ 2.検索 3.ソート → グルーピング
 function applyStatusPriorityAssigneeDueFilter(
   tasks: ProjectTaskView[],
   statusSel: ReadonlySet<string>,
@@ -131,6 +132,9 @@ export class ProjectComponent {
     { value: 'priority', label: '優先度' },
     { value: 'updatedAt', label: '更新日' },
   ];
+  isMenuOpen: boolean = false;
+  loadingState: 'idle' | 'dropping' | 'deleting' = 'idle';
+
 
   readonly statusSelection$ = new BehaviorSubject<ReadonlySet<string>>(new Set());
   readonly prioritySelection$ = new BehaviorSubject<ReadonlySet<string>>(new Set());
@@ -141,7 +145,7 @@ export class ProjectComponent {
 
   readonly titleSearch = new FormControl('', { nonNullable: true });
 
-  /** セクション開閉（データ更新でリセットしない） */
+  //  セクション開閉（データ更新でリセットしない）
   sectionOpen: Record<string, boolean> = Object.fromEntries(
     [...STATUS_ORDER].map((s) => [s, true] as const),
   );
@@ -274,18 +278,81 @@ export class ProjectComponent {
     return d.toISOString().slice(0, 10);
   }
 
-  // プロジェクトを削除
-  async deleteProject(): Promise<void> {
-    const projectid = this.route.snapshot.paramMap.get('projectId');
-    if(!projectid) return;
+  // // プロジェクトを削除
+  // async deleteProject(): Promise<void> {
+  //   const projectid = this.route.snapshot.paramMap.get('projectId');
+  //   if(!projectid) return;
+  //   this.loadingState = 'deleting';
+  //   try{
+  //   await this.projectFs.deleteProject(projectid);
+  //   window.alert('プロジェクトを削除しました');
+  //   await this.router.navigate(['/']);
+  // } catch (error) {
+  //   window.alert('プロジェクトの削除に失敗しました')
+  //   console.error(error);
+  // } finally {
+  //   this.loadingState = 'idle';
+  // }
+  // }
+
+  goToEditProject(): void {
+    const projectId = this.route.snapshot.paramMap.get('projectId');
+    if(!projectId) return;
+    void this.router.navigate(['/projects', projectId ,'edit']);
+  }
+
+  async onEdit(): Promise<void> {
+    const projectId = this.route.snapshot.paramMap.get('projectId');
+    if(!projectId) return;
+    await this.router.navigate(['/projects', projectId ,'edit']);
+  }
+
+  async onDelete(): Promise<void> {
+    const projectId = this.route.snapshot.paramMap.get('projectId');
+    if(!projectId) return;
+    this.loadingState = 'deleting';
     try{
-    await this.projectFs.deleteProject(projectid);
+    await this.projectFs.deleteProject(projectId);
     window.alert('プロジェクトを削除しました');
     await this.router.navigate(['/']);
   } catch (error) {
     window.alert('プロジェクトの削除に失敗しました')
     console.error(error);
+  } finally {
+    this.loadingState = 'idle';
   }
+  }
+
+  async onDrop(): Promise<void> {
+    const projectId = this.route.snapshot.paramMap.get('projectId');
+    if(!projectId) return;
+    const user = await firstValueFrom(this.authService.user$);
+    if(!user) return;
+    this.loadingState = 'dropping';
+    try{
+    await this.projectFs.leaveProject(projectId, user.uid);
+    window.alert('プロジェクトを脱退しました');
+    void this.router.navigate(['/']);
+  } catch (error) {
+    window.alert('プロジェクトの脱退に失敗しました')
+    console.error(error);
+  } finally {
+    this.loadingState = 'idle';
+  }
+  }
+
+  toggleMenu(event: MouseEvent): void {
+    event.stopPropagation();
+    if(this.isMenuOpen === true) {
+      this.isMenuOpen = false;
+    } else {
+      this.isMenuOpen = true;
+    }
+  }
+
+  @HostListener('document:click')
+  closeMenu(): void {
+    this.isMenuOpen = false;
   }
 
   // ログアウト

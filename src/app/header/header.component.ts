@@ -22,7 +22,7 @@ export class HeaderComponent {
   }
 
   goToMypage(): void {
-    this.router.navigate(['/mypage']);
+    this.router.navigate(['/profile']);
   }
 
   toggleMenu(event: MouseEvent): void {

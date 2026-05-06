@@ -6,7 +6,7 @@
 <main class="main">
     <!-- 左カラム -->
     <section class="left">
-        <h2>今日・明日のタスク</h2>
+        <h2>今日・明日が期限のタスク</h2>
 
         <table class="task-table">
           <thead class="task-table-header">
@@ -51,19 +51,31 @@
             <input type="text" placeholder="合言葉" [formControl]="joinPhrase">
             <button type="button" (click)="joinProject()">参加</button>
         </div>
-        <ul class="search-hits" *ngIf="searchResults$ | async as hits">
-          <li *ngFor="let p of hits"
-              class="search-hit"
-              [class.search-hit--selected]="selectedProject?.id === p.id"
-              (click)="selectProject(p)">{{ p.name }}</li>
-        </ul>
+        <ng-container *ngIf="searchResults$ | async as hits">
+          <ng-container *ngIf="hits !== null">
+            <ul class="search-hits" *ngIf="hits.length > 0; else empty">
+              <li *ngFor="let p of hits"
+                  class="search-hit"
+                    [class.search-hit--selected]="selectedProject?.id === p.id"
+                    (click)="selectProject(p)">
+                    {{ p.name }}
+              </li>
+            </ul>
+          </ng-container>
+        </ng-container>
+        <ng-template #empty>
+          <div class="empty">該当する結果がありません</div>
+        </ng-template>
         <!-- 新規作成 -->
         <div class="create-box">
             <button type="button" (click)="goToCreateProject()">＋ 新規プロジェクトを作成</button>
         </div>
         <h2>参加プロジェクト一覧</h2>
-        <ul class="joined-list" *ngIf="joinedProjects$ | async as joined">
-          <li class="joined-list-item" *ngFor="let jp of joined" (click)="goToProjectDetail(jp.id)" >
+        <div class = "top-row">
+          <input type="text" placeholder="検索" [formControl]="joinedProjectSearch">
+        </div>
+        <ul class="joined-list" *ngIf="filteredProjects$ | async as filteredProjects">
+          <li class="joined-list-item" *ngFor="let jp of filteredProjects" (click)="goToProjectDetail(jp.id)" >
             {{ jp.name }}
               <div class="menu-wrapper" >
                 <span class="menu-trigger" (click)="toggleMenu($event, jp)">︙</span>
@@ -75,6 +87,12 @@
               </div>
           </li>
         </ul>
+        <div *ngIf="loadingState === 'dropping'">
+          <div class="loading">プロジェクトを脱退しています...</div>
+        </div>
+        <div *ngIf="loadingState === 'deleting'">
+          <div class="loading">プロジェクトを削除しています...</div>
+        </div>
 
     </section>
 </main>

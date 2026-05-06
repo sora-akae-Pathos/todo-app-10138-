@@ -4,8 +4,8 @@
     <div class="menu-wrapper">
       <span class="menu-trigger" (click)="toggleMenu($event)">≡</span>
       <div class="menu" *ngIf="isMenuOpen" >
-        <div class="menu-item" (click)="signout()">ログアウト</div>
         <div class="menu-item" (click)="goToMypage()">マイページ</div>
+        <div class="menu-item" (click)="signout()">ログアウト</div>
       </div>
     </div>
   </div>

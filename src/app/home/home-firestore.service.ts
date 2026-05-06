@@ -163,7 +163,7 @@ export class HomeFirestoreService {
       return collectionData(q).pipe(
         // tap(members => console.log('members:', members)),
         switchMap((members: any[]) => {
-          const ids = [...new Set(members.map(m => m.projectid))];
+        const ids = [...new Set(members.map(m => m.projectid))];
           // console.log('ids:', ids);
         if (ids.length === 0) return of([]);
         return combineLatest(

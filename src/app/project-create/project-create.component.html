@@ -8,9 +8,12 @@
     <label>合言葉</label>
     <input type="text" placeholder="4文字以上15文字以内" formControlName="phrase">
     <div class="button-container">
-    <button type="submit" [disabled]="project_create_form.invalid">作成</button>
-    <button type="button" (click)="onCancel()">キャンセル</button>
+    <button type="submit" [disabled]="project_create_form.invalid || loading">作成</button>
+    <button type="button" (click)="onCancel()" [disabled]="loading">キャンセル</button>
     </div>
   </form>
+  <div *ngIf="loading">
+    <div class="loading">プロジェクトを作成しています...</div>
+  </div>
 </div>
 </body>

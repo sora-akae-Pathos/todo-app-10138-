@@ -189,10 +189,44 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  position: relative;
 }
 
 .title-upper {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.menu-wrapper {
+  position: relative;
+  right: 10px;
+  top: 0%;
+}
+
+.menu-trigger {
+  margin-top: 5px;
+  font-size: 25px;
+  cursor: pointer;
+}
+
+.menu {
+  position: absolute;
+  right: 100%;
+  top: 0%;
+  margin-right: 0px;
+  background: white;
+  border: 1px solid #ccc;
+  width: 100px;
+  z-index: 1000;
+  cursor: pointer;
+}
+
+.menu-item {
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.menu-item:hover {
+  background: #eee;
 }

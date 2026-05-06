@@ -1,14 +1,14 @@
 import { Component, inject } from '@angular/core';
-import { FormBuilder, FormControl, Validators, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { trimRequired, noWhitespace } from '../shares/custom-validators';
 import { AuthService } from '../auth/auth.service';
-import { firstValueFrom, take, debounceTime, Observable } from 'rxjs';
+import { firstValueFrom, take, debounceTime, Observable, switchMap, Subject, takeUntil } from 'rxjs';
+import { of } from 'rxjs';
 import { doc, updateDoc, collection, serverTimestamp, Firestore, collectionData, DocumentReference, docData, collectionGroup, where, query, getDocs } from '@angular/fire/firestore';
 import { FormStateService } from '../shares/FormStateService';
 import { Location } from '@angular/common';
-import { toDateInputString, toTimestamp } from '../shares/utiles';
 
 @Component({
   selector: 'app-profile',
@@ -22,65 +22,66 @@ export class ProfileComponent {
   userRef!: DocumentReference;
   user!: string;
   user$!: Observable<any>;
-  vm$!: Observable<{ user: any | null; members: any[] }>;
+  displayname!: string;
+  loadingState: 'idle' | 'saving' = 'idle';
 
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
   private firestore = inject(Firestore);
   private router = inject(Router);
-  private route = inject(ActivatedRoute);
   private formState = inject(FormStateService);
   private location = inject(Location);
-  private isSavingEnabled = true;
+
+  private destroy$ = new Subject<void>();
 
   profile_form = this.fb.group({
     displayname: ['', [trimRequired]],
   });
 
   ngOnInit() {
-    //セッションごとにキーを作成(タブで複製されても対応可能)
     this.key = `profile_form`;
-    this.user$ = this.authService.user$.pipe(take(1));
-    this.user$.subscribe(u => {
-      if (!u) {
-        window.alert('ログインしてください');
-        return;
-      }
-      this.userRef = doc(this.firestore, 'users', u.uid);
-    });
-    this.user$ = docData(this.userRef);
 
+    //ロード後に値を保存
     const saved = this.formState.load<any>(this.key);
+
+    //ユーザー情報の取得準備(subscribeしないとデータは取得できない)
+    this.user$ = this.authService.user$.pipe(
+      switchMap(u => {
+        if (!u) {
+          window.alert('ログインしてください');
+          return of(null);
+        }
+
+        const ref = doc(this.firestore, 'users', u.uid);
+        return docData(ref);
+      })
+    );
 
     // 初期ロードフラグ
     let initialValue = true;
 
-     // DB取得 → フォーム反映（セッション優先）
-    this.user$.subscribe(user => {
-    this.user = user;
+    // フォーム反映(ユーザー情報の取得)
+    this.user$.pipe(takeUntil(this.destroy$)).subscribe(user => {
+      if (!user) return;
 
-    const data = saved ?? {
-      displayname: user?.displayname ?? '',
-    };
+      const data = saved ?? {
+        displayname: user.displayname ?? '',
+      };
 
-    this.profile_form.patchValue(data);
+      this.profile_form.patchValue(data);
 
-    initialValue = false;
-    
-  });
-
-  // フォーム変更 → セッション保存
-  this.profile_form.valueChanges
-    .pipe(debounceTime(300))
-    .subscribe(value => {
-      if (initialValue || !this.isSavingEnabled) return;
-      this.formState.save(this.key, value);
-      console.log(value);
+      initialValue = false;
     });
-}
+
+    this.profile_form.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(value => {
+      if (initialValue) return;
+    
+      this.formState.save(this.key, value);
+    });
+  }
+
 
   async profileEdit() {
-    try{
     const u = await firstValueFrom(this.authService.user$.pipe(take(1)));
     if (!u) {
       window.alert('ログインしてください');
@@ -88,13 +89,17 @@ export class ProfileComponent {
     }
     if (this.profile_form.invalid) return;
 
+    this.loadingState = 'saving';
+    try{
     const raw = this.profile_form.value;
 
     //usersのdisplaynameを更新
-    await updateDoc(this.userRef, {
+    const userRef = doc(this.firestore, 'users', u.uid);
+    await updateDoc(userRef, {
       displayname: raw.displayname,
-      updatedAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
     });
+    console.log('usersのdisplaynameを更新');
 
     //membersのdisplaynameを更新
     const membersRef = collectionGroup(this.firestore, 'members');
@@ -108,6 +113,7 @@ export class ProfileComponent {
         })
       )
     );
+    console.log('membersのdisplaynameを更新');
 
     //tasksのassignednameを更新
     const tasksRef = collection(this.firestore, 'tasks');
@@ -121,8 +127,8 @@ export class ProfileComponent {
         })
       )
     );
-
-    this.isSavingEnabled = false;
+    console.log('tasksのassignednameを更新');
+    
     this.formState.clear(this.key);
 
     if(window.history.length > 1) {
@@ -137,6 +143,9 @@ export class ProfileComponent {
 } catch (error) {
   window.alert('プロフィールの更新に失敗しました')
   console.error(error);
+} finally {
+  this.loadingState = 'idle';
+  console.log('loadingState', this.loadingState);
 }
 }
 
@@ -151,6 +160,10 @@ export class ProfileComponent {
 
   ngOnDestroy(): void {
     console.log('onDestroy');
+
+    this.destroy$.next();
+    this.destroy$.complete();
+
     this.formState.clear(this.key);
   }
   
