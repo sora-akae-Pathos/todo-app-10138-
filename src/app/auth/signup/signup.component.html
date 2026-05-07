@@ -16,10 +16,6 @@
       30文字以内で入力してください
     </div>
   </div>
-  <!-- <div *ngIf="isUsernameTaken(usernameValue)">
-    このユーザー名は既に使用されています
-  </div> -->
-  <div *ngIf="errorMessage">{{ errorMessage }}</div>
 
   <label>メールアドレス</label>
   <input type="email" placeholder="@gmail.com等" formControlName="email">
@@ -34,7 +30,6 @@
       空白は認められません
     </div>
   </div>
-  <div *ngIf="errorMessage">{{ errorMessage }}</div>
 
   <label>パスワード</label>
   <input type="password" placeholder="8文字以上32文字以内" formControlName="password">
@@ -52,7 +47,6 @@
       空白は認められません
     </div>
   </div>
-  <div *ngIf="errorMessage">{{ errorMessage }}</div>
 
   <label>確認用パスワード</label>
   <input type="password" placeholder="8文字以上32文字以内" formControlName="confirmPassword">
@@ -64,12 +58,14 @@
       パスワードが一致しません
     </div>
   </div>
-  <div *ngIf="errorMessage">{{ errorMessage }}</div>
 
   <button type="submit" [disabled]="signupForm.invalid">
     登録
   </button>
 
-  <p *ngIf="errorMessage">{{ errorMessage }}</p>
+  <div *ngIf="loading === 'loading'">
+    <div class="loading">新規登録中...</div>
+  </div>
+  <div class="error-message" *ngIf="errorMessage">{{ errorMessage }}</div>
 
 </form>

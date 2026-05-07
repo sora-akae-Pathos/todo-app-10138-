@@ -47,7 +47,7 @@ function mapTask(doc: Record<string, unknown> & { id: string }): ProjectTaskView
 export class ProjectFirestoreService {
   private readonly firestore = inject(Firestore);
 
-  /** Firestore では projectid のみで絞る */
+  // Firestore では projectid のみで絞る
   watchTasksByProjectId(projectId: string): Observable<ProjectTaskView[]> {
     const tasksRef = collection(this.firestore, 'tasks');
     const q = query(tasksRef, where('projectid', '==', projectId));
@@ -106,7 +106,7 @@ export class ProjectFirestoreService {
     const tasksRef = collection(this.firestore, 'tasks');
     const q = query(tasksRef, where('projectid', '==', projectid), where('assignedid', '==', uid));
     const tasksSnap = await getDocs(q);
-    await Promise.all(tasksSnap.docs.map(docSnap => updateDoc(docSnap.ref, { assignedname: null, assignedid: null })));
+    await Promise.all(tasksSnap.docs.map(docSnap => updateDoc(docSnap.ref, { assignedname: '', assignedid: '' })));
 
     // メンバーを削除
     const memberRef = doc(this.firestore, 'projects', projectid, 'members', uid);

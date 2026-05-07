@@ -15,6 +15,7 @@ import { trimRequired, noWhitespace } from '../../shares/custom-validators';
 export class SignInComponent {
 
   errorMessage = '';
+  loading: 'idle' | 'loading' = 'idle';
 
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
@@ -42,12 +43,27 @@ export class SignInComponent {
 
     const email = raw.email?.trim();
     const password = raw.password?.trim();
+    this.loading = 'loading';
 
     try{
       await this.authService.signin(email!,password!)
-      this.router.navigate(['/'])
+      this.router.navigate(['/']);
     }catch(error:any){
-      this.errorMessage = error.message
+      switch(error.code){
+
+        case 'auth/invalid-credential':
+          this.errorMessage = 'メールアドレスまたはパスワードが違います';
+          break;
+    
+        case 'auth/too-many-requests':
+          this.errorMessage = '試行回数が多すぎます。しばらく待ってください';
+          break;
+    
+        default:
+          this.errorMessage = 'ログインに失敗しました';
+      }
+    } finally {
+      this.loading = 'idle';
     }
   }
 

@@ -21,7 +21,8 @@ type UserField = 'username' | 'email';
 export class SignUpComponent {
   key!: string;
   errorMessage: string = '';
-
+  loading: 'idle' | 'loading' = 'idle';
+  
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
   private router = inject(Router);
@@ -92,8 +93,7 @@ async isEmailTaken(email: string): Promise<boolean> {
   return this.isFieldTaken('email', email);
 }
 
-  async signup() {
-    
+  async signup() { 
     if (this.signupForm.invalid) return;
 
     // const { username, email, password } = this.signupForm.value;
@@ -104,7 +104,7 @@ async isEmailTaken(email: string): Promise<boolean> {
     const email = raw.email?.trim();
     const password = raw.password?.trim();
 
-
+    this.loading = 'loading';
     try {
       // ユーザー名、メールアドレスの重複チェック
       const usernametaken = await this.isUsernameTaken(username!);
@@ -131,12 +131,17 @@ async isEmailTaken(email: string): Promise<boolean> {
         updatedAt: serverTimestamp()
       });
       this.formState.clear(this.key);
-      this.router.navigate(['/']); // 登録後の遷移
+      this.router.navigate(['/']);
     } catch (error: any) {
-      this.errorMessage = error.message;
+      switch(error.code){
+        case 'auth/email-already-in-use':
+          this.errorMessage = 'このメールアドレスは既に使用されています';
+          break;
+        default:
+          this.errorMessage = '新規登録に失敗しました';
+      }
+    } finally {
+      this.loading = 'idle';
     }
   }
-  // onLeave(): void {
-  //   this.formState.clear(this.key);
-  // }
 }

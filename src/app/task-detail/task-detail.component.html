@@ -1,5 +1,8 @@
 <header>
   <button class="delete-button" (click)="deleteTask()" [disabled]="loadingState === 'deleting' || loadingState === 'saving'">削除</button>
+  <div *ngIf="loadingState === 'deleting'">
+    <div class="loading">課題を削除しています...</div>
+  </div>
 </header>
 <body>
 <div class="task-detail-container">
@@ -67,9 +70,6 @@
   </form>
   <div *ngIf="loadingState === 'saving'">
     <div class="loading">課題を更新しています...</div>
-  </div>
-  <div *ngIf="loadingState === 'deleting'">
-    <div class="loading">課題を削除しています...</div>
   </div>
 </div>
 </body>

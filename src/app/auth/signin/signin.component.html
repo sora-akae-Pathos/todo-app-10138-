@@ -20,7 +20,6 @@
       空白は認められません
     </div>
   </div>
-  <div *ngIf="errorMessage">{{ errorMessage }}</div>
 
 
   <label>パスワード</label>
@@ -39,13 +38,15 @@
       空白は認められません
     </div>
   </div>
-  <div *ngIf="errorMessage">{{ errorMessage }}</div>
 
 
-  <button type="submit" [disabled]="signinForm.invalid">
+  <button type="submit" [disabled]="signinForm.invalid || loading === 'loading'">
     ログイン
   </button>
 
-  <p *ngIf="errorMessage">{{ errorMessage }}</p>
+  <div *ngIf="loading === 'loading'">
+    <div class="loading">ログイン中...</div>
+  </div>
+  <div class="error-message" *ngIf="errorMessage">{{ errorMessage }}</div>
 
 </form>

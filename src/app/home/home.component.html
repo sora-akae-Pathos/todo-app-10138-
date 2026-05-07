@@ -6,7 +6,7 @@
 <main class="main">
     <!-- 左カラム -->
     <section class="left">
-        <h2>今日・明日が期限のタスク</h2>
+        <h2>今日・明日が期限の課題</h2>
 
         <table class="task-table">
           <thead class="task-table-header">
@@ -18,8 +18,9 @@
             </tr>
           </thead>
       
-          <tbody class="task-table-body">
-            <tr *ngFor="let task of tasks$ | async"
+          <ng-container *ngIf="tasks$ | async as tasks">
+          <tbody class="task-table-body" *ngIf="tasks.length > 0; else empty">
+            <tr *ngFor="let task of tasks"
                 (click)="goToDetail(task.id)">
               <td>{{ task.title }}</td>
               <td>
@@ -40,6 +41,14 @@
                 'background-color-completed': task.status === '完了'}">{{ task.status }}</td>
             </tr>
           </tbody>
+          </ng-container>
+          <ng-template #empty>
+            <tbody>
+              <tr>
+                <td colspan="4">今日明日の課題はありません。プロジェクトに入り課題を作成してください。</td>
+              </tr>
+            </tbody>
+          </ng-template>
         </table>
 
     </section>
