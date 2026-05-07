@@ -6,7 +6,7 @@ import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../auth.service';
 import { trimRequired, noWhitespace, passwordMismatch } from '../../shares/custom-validators';
 import { FormStateService } from '../../shares/FormStateService';
-import { debounceTime } from 'rxjs';
+import { debounceTime, Subject, takeUntil } from 'rxjs';
 
 type UserField = 'username' | 'email';
 
@@ -28,6 +28,7 @@ export class SignUpComponent {
   private router = inject(Router);
   private firestore = inject(Firestore);
   private formState = inject(FormStateService);
+  private destroy$ = new Subject<void>();
 
   get username(): FormControl {
     return this.signupForm.get('username') as FormControl;
@@ -59,7 +60,10 @@ export class SignUpComponent {
     if (saved) {
       this.signupForm.patchValue(saved);
     }
-    this.signupForm.valueChanges.pipe(debounceTime(300)).subscribe(value => {
+    this.signupForm.valueChanges.pipe(
+      debounceTime(300),
+      takeUntil(this.destroy$)
+    ).subscribe(value => {
       const filteredValue = {
         username: value.username?.trim() ?? '',
         email: value.email?.trim() ?? '',
@@ -143,5 +147,10 @@ async isEmailTaken(email: string): Promise<boolean> {
     } finally {
       this.loading = 'idle';
     }
+  }
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }

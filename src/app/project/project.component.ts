@@ -238,11 +238,33 @@ export class ProjectComponent {
   }
 
   onDueFromInput(isoDate: string): void {
-    this.dueFrom$.next(isoDate ? new Date(`${isoDate}T00:00:00`) : null);
+    const from = isoDate
+    ? new Date(`${isoDate}T00:00:00`)
+    : null;
+
+    this.dueFrom$.next(from);
+
+    const to = this.dueTo$.value;
+
+    // 開始日 > 終了日 なら終了日を合わせる
+    if (from && to && from > to) {
+      this.dueTo$.next(from);
+    }
   }
 
   onDueToInput(isoDate: string): void {
-    this.dueTo$.next(isoDate ? new Date(`${isoDate}T00:00:00`) : null);
+    const to = isoDate
+    ? new Date(`${isoDate}T00:00:00`)
+    : null;
+
+    this.dueTo$.next(to);
+
+    const from = this.dueFrom$.value;
+
+    // 終了日 < 開始日 なら開始日を合わせる
+    if (to && from && to < from) {
+      this.dueFrom$.next(to);
+    }
   }
 
   onSortKeyChange(key: string): void {
@@ -269,31 +291,22 @@ export class ProjectComponent {
   currentDueFrom(): string {
     const d = this.dueFrom$.value;
     if (!d) return '';
-    return d.toISOString().slice(0, 10);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+  
+    return `${year}-${month}-${day}`;
   }
 
   currentDueTo(): string {
     const d = this.dueTo$.value;
     if (!d) return '';
-    return d.toISOString().slice(0, 10);
-  }
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
 
-  // // プロジェクトを削除
-  // async deleteProject(): Promise<void> {
-  //   const projectid = this.route.snapshot.paramMap.get('projectId');
-  //   if(!projectid) return;
-  //   this.loadingState = 'deleting';
-  //   try{
-  //   await this.projectFs.deleteProject(projectid);
-  //   window.alert('プロジェクトを削除しました');
-  //   await this.router.navigate(['/']);
-  // } catch (error) {
-  //   window.alert('プロジェクトの削除に失敗しました')
-  //   console.error(error);
-  // } finally {
-  //   this.loadingState = 'idle';
-  // }
-  // }
+    return `${year}-${month}-${day}`;
+  }
 
   goToEditProject(): void {
     const projectId = this.route.snapshot.paramMap.get('projectId');
