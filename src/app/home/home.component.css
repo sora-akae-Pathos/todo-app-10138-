@@ -3,6 +3,10 @@ body {
   font-family: sans-serif;
 }
 
+h2{
+  margin-top: 0px;
+}
+
 /* 全体 */
 .container {
   display: flex;
