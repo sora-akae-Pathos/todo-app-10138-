@@ -27,7 +27,7 @@
     <div class="toolbar-row">
       <label class="field grow">
         <span>タイトル検索</span>
-        <input type="text" [formControl]="titleSearch" placeholder="部分一致（trim・大文字小文字無視）" />
+        <input type="text" [formControl]="titleSearch" placeholder="部分一致" />
       </label>
       <label class="field">
         <span>並び替え</span>
@@ -38,7 +38,7 @@
     </div>
 
     <div class="toolbar-row">
-      <span class="label">ステータス（複数は OR）</span>
+      <span class="label">ステータス</span>
       <label *ngFor="let s of statusOptions" class="chip">
         <input
           type="checkbox"
@@ -49,7 +49,7 @@
     </div>
 
     <div class="toolbar-row">
-      <span class="label">優先度（複数は OR）</span>
+      <span class="label">優先度</span>
       <label *ngFor="let p of priorityOptions" class="chip">
         <input
           type="checkbox"
