@@ -4,9 +4,16 @@
     <div class="menu-wrapper">
       <span class="menu-trigger" (click)="toggleMenu($event)">≡</span>
       <div class="menu" *ngIf="isMenuOpen" >
-        <div class="menu-item" (click)="goToMypage()">マイページ</div>
-        <div class="menu-item" (click)="signout()">ログアウト</div>
+        <div class="menu-item" (click)="loading === 'idle' && goToMypage()">マイページ</div>
+        <div class="menu-item" (click)="loading === 'idle' && signout()">ログアウト</div>
+        <div class="menu-item" (click)="loading === 'idle' && deleteUser()">退会</div>
+        </div>
       </div>
     </div>
+    <div class="loading-container" *ngIf="loading === 'deleting'">
+      <div class="loading">アカウントを削除しています...</div>
+    </div>
+    <div class="loading-container" *ngIf="loading === 'signout'">
+      <div class="loading">ログアウトしています...</div>
   </div>
 </header>

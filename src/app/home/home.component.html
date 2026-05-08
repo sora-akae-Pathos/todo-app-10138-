@@ -18,7 +18,7 @@
           </thead>
       
           <ng-container *ngIf="tasks$ | async as tasks">
-          <tbody class="task-table-body" *ngIf="tasks.length > 0; else empty">
+          <tbody class="task-table-body" *ngIf="tasks.length > 0; else emptylist">
             <tr *ngFor="let task of tasks"
                 (click)="goToDetail(task.id)">
               <td>{{ task.title }}</td>
@@ -41,7 +41,7 @@
             </tr>
           </tbody>
           </ng-container>
-          <ng-template #empty>
+          <ng-template #emptylist>
             <tbody>
               <tr>
                 <td colspan="4">今日明日の課題はありません。プロジェクトに入り課題を作成してください。</td>
@@ -94,6 +94,11 @@
                 </div>
               </div>
           </li>
+
+          <div *ngIf="filteredProjects.length === 0" class="empty-message">
+            プロジェクトの作成か参加をしてみましょう
+          </div>
+
         </ul>
         <div *ngIf="loadingState === 'dropping'">
           <div class="loading">プロジェクトを脱退しています...</div>

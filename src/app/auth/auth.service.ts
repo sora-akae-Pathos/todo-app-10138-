@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { Auth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, authState } from '@angular/fire/auth';
+import { Auth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, authState, deleteUser, User } from '@angular/fire/auth';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
@@ -33,6 +33,12 @@ export class AuthService {
         }
       })
     );
+  }
+
+  async deleteUser() {
+    const user = this.auth.currentUser;
+    if(!user) return;
+    await deleteUser(user);
   }
 
   // getUid(): string | null {

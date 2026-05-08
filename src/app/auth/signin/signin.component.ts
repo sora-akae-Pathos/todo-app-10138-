@@ -62,6 +62,9 @@ export class SignInComponent {
         default:
           this.errorMessage = 'ログインに失敗しました';
       }
+      setTimeout(() => {
+        this.errorMessage = '';
+      }, 5000);
     } finally {
       this.loading = 'idle';
     }
