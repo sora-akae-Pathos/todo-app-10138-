@@ -130,10 +130,9 @@ export class HomeFirestoreService {
     );
   }
 
-  /**
-   * 名前検索（Firestore の制約上、主に「先頭一致」に相当する範囲クエリで絞り込み）
-   * 取得後に部分一致（大文字小文字無視）でフィルタする。
-   */
+  
+    // 名前検索（Firestore の制約上、主に「先頭一致」に相当する範囲クエリで絞り込み）
+    // 取得後に部分一致（大文字小文字無視）でフィルタする。
   searchProjectsByName$(term: string): Observable<ProjectSearchHit[]> {
     const t = toHiragana(term.trim());
     if (!t) return of([]);

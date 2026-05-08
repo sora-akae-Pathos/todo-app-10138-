@@ -129,7 +129,7 @@ async isEmailTaken(email: string): Promise<boolean> {
 
       // Firestoreに保存
       await setDoc(doc(this.firestore, 'users', uid), {
-        username: username,
+        displayname: username,
         email: email,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
@@ -144,6 +144,9 @@ async isEmailTaken(email: string): Promise<boolean> {
         default:
           this.errorMessage = '新規登録に失敗しました';
       }
+      setTimeout(() => {
+        this.errorMessage = '';
+      }, 5000);
     } finally {
       this.loading = 'idle';
     }
