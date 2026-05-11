@@ -1,5 +1,4 @@
-import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
-import { FormGroup } from '@angular/forms';
+import { AbstractControl, ValidationErrors } from '@angular/forms';
 
 export const trimRequired = (control: AbstractControl): ValidationErrors | null => {
   const value = control.value?.trim();

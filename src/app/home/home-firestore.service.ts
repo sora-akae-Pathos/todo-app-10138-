@@ -124,6 +124,7 @@ export class HomeFirestoreService {
       where('assignedid', '==', uid),
       where('dueDate', '>=', Timestamp.fromDate(start)),
       where('dueDate', '<=', Timestamp.fromDate(end)),
+      where('status', '!=', '完了'),
     );
     return collectionData(q, { idField: 'id' }).pipe(
       map((rows) => toHomeRows(rows as (TaskDoc & { id: string })[])),
@@ -206,8 +207,9 @@ export class HomeFirestoreService {
   }
 
   /** プロジェクトを削除 */
-  async deleteProject(projectid: string): Promise<void> {
-    if(confirm('プロジェクトを削除しますか？')) {
+  async deleteProject(projectid: string): Promise<boolean> {
+    const result = confirm('プロジェクトから脱退しますか？');
+    if(!result) return false;
     try{
     // メンバーを削除
     const membersRef = collection(this.firestore, 'projects', projectid, 'members');
@@ -226,18 +228,20 @@ export class HomeFirestoreService {
     // プロジェクトを削除
     const projRef = doc(this.firestore, 'projects', projectid);
     await deleteDoc(projRef);
+    return true;
     } catch (error) {
       console.error(error);
       throw error;
     }
-    }
   }
 
   /** プロジェクトを脱退 */
-  async leaveProject(projectid: string, uid: string): Promise<void> {
-    if(confirm('プロジェクトから脱退しますか？')) {
+  async leaveProject(projectid: string, uid: string): Promise<boolean> {
+    const result = confirm('プロジェクトから脱退しますか？');
+    if(!result) return false;
+
     try{
-    // assignedname及びassignedidがnullに変更する
+    // assignedname及びassignedidを空文字にする
     const tasksRef = collection(this.firestore, 'tasks');
     const q = query(tasksRef, where('projectid', '==', projectid), where('assignedid', '==', uid));
     const tasksSnap = await getDocs(q);
@@ -246,10 +250,11 @@ export class HomeFirestoreService {
     // メンバーを削除
     const memberRef = doc(this.firestore, 'projects', projectid, 'members', uid);
     await deleteDoc(memberRef);
+
+    return true;
     } catch (error) {
       console.error(error);
       throw error;
-    }
     }
   }
 }

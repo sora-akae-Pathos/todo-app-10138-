@@ -76,7 +76,6 @@ export class ProjectFirestoreService {
 
   // プロジェクトを削除
   async deleteProject(projectid: string): Promise<void> {
-    if(confirm('プロジェクトを削除しますか？')) {
       try{
         // メンバーを削除
         const membersRef = collection(this.firestore, 'projects', projectid, 'members');
@@ -95,12 +94,10 @@ export class ProjectFirestoreService {
         console.error(error);
         throw error;
       }
-    }
   }
 
   // プロジェクトから脱退
   async leaveProject(projectid: string, uid: string): Promise<void> {
-    if(confirm('プロジェクトから脱退しますか？')) {
     try{
     // assignedname及びassignedidがnullに変更する
     const tasksRef = collection(this.firestore, 'tasks');
@@ -114,7 +111,6 @@ export class ProjectFirestoreService {
     } catch (error) {
       console.error(error);
       throw error;
-    }
     }
   }
 }

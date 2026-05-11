@@ -40,3 +40,22 @@ input[type="text"] {
     margin-bottom: 10px;
     font-size: 14px;
 }
+
+.loading-overlay {
+    position: fixed;
+    inset: 0;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    background: rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+}
+
+.loading {
+    padding: 24px 32px;
+    background: white;
+    border-radius: 12px;
+    font-size: 18px;
+}

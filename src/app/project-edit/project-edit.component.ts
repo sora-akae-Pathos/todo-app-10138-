@@ -157,6 +157,11 @@ export class ProjectEditComponent {
 
   async deleteProject() {
     if(!this.projectId) return;
+    const result = confirm('プロジェクトを削除しますか？');
+    if(!result){
+      window.alert('キャンセルされました');
+      return;
+    }
     this.loadingState = 'deleting';
     try{
         await this.peService.deleteProject(this.projectId);

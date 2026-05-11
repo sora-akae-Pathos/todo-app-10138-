@@ -7,6 +7,7 @@ import { debounceTime, distinctUntilChanged, switchMap, tap, map, startWith } fr
 import { AuthService } from '../auth/auth.service';
 import { HomeFirestoreService } from './home-firestore.service';
 import { HomeTaskRow, JoinedProjectView, ProjectSearchHit } from '../models/home.models';
+import { MenuService } from '../shares/MenuService';
 
 
 @Component({
@@ -22,11 +23,11 @@ export class HomeComponent {
   isMenuOpen: boolean = false;
   loadingState: 'idle' | 'dropping' | 'deleting' = 'idle';
 
-
   private readonly authService = inject(AuthService);
   private readonly homeFs = inject(HomeFirestoreService);
   private readonly router = inject(Router);
-
+  private readonly menuService = inject(MenuService);
+  openedMenu = this.menuService.openedMenu;
   private readonly refreshJoined$ = new Subject<void>();
 
   readonly projectSearch = new FormControl('', { nonNullable: true });
@@ -140,11 +141,27 @@ export class HomeComponent {
 
   toggleMenu(event: MouseEvent, jp: JoinedProjectView): void {
     event.stopPropagation();
-    if (this.selectedProject?.id === jp.id) {
-      this.isMenuOpen = !this.isMenuOpen;
+    // if (this.selectedProject?.id === jp.id) {
+    //   this.isMenuOpen = !this.isMenuOpen;
+    // } else {
+    //   this.selectedProject = jp;
+    //   this.isMenuOpen = true;
+    // }
+      // 同じprojectなら閉じる
+    if (
+      this.selectedProject?.id === jp.id &&
+      this.openedMenu() === 'home'
+    ) {
+
+      this.menuService.close();
+
     } else {
+
+      // project切替
       this.selectedProject = jp;
-      this.isMenuOpen = true;
+
+      // home menu開く
+      this.menuService.open('home');
     }
   }
 
@@ -152,6 +169,7 @@ export class HomeComponent {
   @HostListener('document:click')
   closeMenu(): void {
     this.isMenuOpen = false;
+    this.menuService.close();
   }
 
   onEdit(event: MouseEvent) {
@@ -166,10 +184,14 @@ export class HomeComponent {
     if(!this.selectedProject) return;
     this.loadingState = 'deleting';
     try{
-    await this.homeFs.deleteProject(this.selectedProject.id);
-    this.refreshJoined$.next();
-    this.router.navigate(['/']);
-    window.alert('プロジェクトを削除しました');
+      const result = await this.homeFs.deleteProject(this.selectedProject.id);
+      if (!result) {
+        window.alert('キャンセルされました');
+        return;
+      }
+      this.refreshJoined$.next();
+      this.router.navigate(['/']);
+      window.alert('プロジェクトを削除しました');
     } catch (error) {
       window.alert('プロジェクトの削除に失敗しました')
       console.error(error);
@@ -187,10 +209,16 @@ export class HomeComponent {
     this.loadingState = 'dropping';
     try{
     console.log('onDrop');
-    await this.homeFs.leaveProject(this.selectedProject.id, user.uid);
+    const result =await this.homeFs.leaveProject(this.selectedProject.id, user.uid);
+
+    if (!result) {
+      window.alert('キャンセルされました');
+      return;
+    }
+
     this.refreshJoined$.next();
     this.router.navigate(['/']);
-    window.alert('プロジェクトから脱退しました');
+      window.alert('プロジェクトから脱退しました');
     } catch (error) {
       window.alert('プロジェクトの脱退に失敗しました')
       console.error(error);

@@ -226,9 +226,13 @@ watchMembers() {
   }
 
   async deleteTask() {
-    if(confirm('課題を削除しますか？')) {
-      this.loadingState = 'deleting';
-      try{
+    const result = confirm('課題を削除しますか？');
+    if(!result){
+      window.alert('キャンセルされました');
+      return;
+    }
+    this.loadingState = 'deleting';
+    try{
       await deleteDoc(this.taskRef);
       this.formState.clear(this.key);
       window.alert('課題を削除しました');
@@ -243,7 +247,6 @@ watchMembers() {
     } finally {
       this.loadingState = 'idle';
       console.log('loadingState', this.loadingState);
-    }
     }
   }
 

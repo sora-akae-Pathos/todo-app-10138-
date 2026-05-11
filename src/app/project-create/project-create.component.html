@@ -12,8 +12,8 @@
     <button type="button" (click)="onCancel()" [disabled]="loading">キャンセル</button>
     </div>
   </form>
-  <div *ngIf="loading">
-    <div class="loading">プロジェクトを作成しています...</div>
-  </div>
+</div>
+<div *ngIf="loading" class="loading-overlay">
+  <div class="loading">プロジェクトを作成しています...</div>
 </div>
 </body>

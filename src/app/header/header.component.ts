@@ -5,6 +5,7 @@ import { CommonModule } from '@angular/common';
 import { AuthService } from '../auth/auth.service';
 import { doc, deleteDoc, collection, query, where, getDocs, updateDoc, Firestore, collectionGroup } from '@angular/fire/firestore';
 import { firstValueFrom, take } from 'rxjs';
+import { MenuService } from '../shares/MenuService';
 
 @Component({
   selector: 'app-header',
@@ -17,9 +18,11 @@ export class HeaderComponent {
   private authService = inject(AuthService);
   private router = inject(Router);
   private firestore = inject(Firestore);
-  isMenuOpen: boolean = false;
+  // isMenuOpen: boolean = false;
   loading: 'idle' | 'deleting' | 'signout' = 'idle';
-  
+  private readonly menuService = inject(MenuService);
+  openedMenu = this.menuService.openedMenu;
+
   async signout(): Promise<void> {
     this.loading = 'signout';
     try {
@@ -39,11 +42,16 @@ export class HeaderComponent {
 
   toggleMenu(event: MouseEvent): void {
     event.stopPropagation();
-    this.isMenuOpen = !this.isMenuOpen;
+    this.menuService.toggle('header');
+    // this.isMenuOpen = !this.isMenuOpen;
   }
 
   async deleteUser(): Promise<void> {
-    if(confirm('アカウントを削除しますか？')) {
+    const result = confirm('アカウントを削除しますか？');
+    if(!result){
+      window.alert('キャンセルされました');
+      return;
+    }
       this.loading = 'deleting';
     try {
       //firestoreのUsersコレクションからユーザーを削除
@@ -74,11 +82,11 @@ export class HeaderComponent {
     } finally {
       this.loading = 'idle';
     }
-    }
   }
 
   @HostListener('document:click')
   closeMenu(): void {
-    this.isMenuOpen = false;
+    // this.isMenuOpen = false;
+    this.menuService.close();
   }
 }

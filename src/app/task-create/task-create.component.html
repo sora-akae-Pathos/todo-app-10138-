@@ -64,8 +64,8 @@
     <button type="button" (click)="onCancel()" [disabled]="loadingState === 'saving'">キャンセル</button>
     </div>
   </form>
-  <div *ngIf="loadingState === 'saving'">
-    <div class="loading">課題を作成しています...</div>
-  </div>
+</div>
+<div *ngIf="loadingState === 'saving'" class="loading-overlay">
+  <div class="loading">課題を作成しています...</div>
 </div>
 </body>

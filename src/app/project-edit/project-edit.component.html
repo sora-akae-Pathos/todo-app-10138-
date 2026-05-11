@@ -13,11 +13,11 @@
     <button type="button" (click)="onCancel()" [disabled]="loadingState === 'saving' || loadingState === 'deleting'">キャンセル</button>
     </div>
   </form>
-  <div *ngIf="loadingState === 'saving'">
-    <div class="loading">プロジェクトを更新しています...</div>
-  </div>
-  <div *ngIf="loadingState === 'deleting'">
-    <div class="loading">プロジェクトを削除しています...</div>
-  </div>
+</div>
+<div *ngIf="loadingState === 'saving'" class="loading-overlay">
+  <div class="loading">プロジェクトを更新しています...</div>
+</div>
+<div *ngIf="loadingState === 'deleting'" class="loading-overlay">
+  <div class="loading">プロジェクトを削除しています...</div>
 </div>
 </body>
