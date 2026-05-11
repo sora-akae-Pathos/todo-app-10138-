@@ -43,13 +43,13 @@ export class TaskDetailService {
     }
   }
 
-  async deleteTask(taskref: DocumentReference<TaskDoc>) {
-    if(confirm('課題を削除しますか？')) {
-      try{
-        await deleteDoc(taskref);
-      } catch (error) {
-        throw error;
-      }
-    }
-  }
+  // async deleteTask(taskref: DocumentReference<TaskDoc>) {
+  //   if(confirm('課題を削除しますか？')) {
+  //     try{
+  //       await deleteDoc(taskref);
+  //     } catch (error) {
+  //       throw error;
+  //     }
+  //   }
+  // }
 }

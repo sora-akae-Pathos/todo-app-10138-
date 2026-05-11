@@ -1,6 +1,6 @@
 <header>
   <button class="delete-button" (click)="deleteTask()" [disabled]="loadingState === 'deleting' || loadingState === 'saving'">削除</button>
-  <div *ngIf="loadingState === 'deleting'">
+  <div *ngIf="loadingState === 'deleting'" class="loading-overlay">
     <div class="loading">課題を削除しています...</div>
   </div>
 </header>

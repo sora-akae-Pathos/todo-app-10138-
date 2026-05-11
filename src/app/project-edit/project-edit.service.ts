@@ -29,7 +29,6 @@ export class ProjectEditService {
   }
 
   async deleteProject(projectId: string) {
-    if(confirm('プロジェクトを削除しますか？')) {
       try{
        // メンバーを削除
       const membersRef = collection(this.firestore, 'projects', projectId, 'members');
@@ -47,7 +46,6 @@ export class ProjectEditService {
     } catch (error) {
       console.error(error);
       throw error;
-    }
     }
   }
 }

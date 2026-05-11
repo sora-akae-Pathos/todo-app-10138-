@@ -1,5 +1,6 @@
 import { Timestamp } from 'firebase/firestore';
 
+
 export function toDateInputString(timestamp: Timestamp | null): string {
   if (!timestamp) return '';
   // return timestamp.toDate().toISOString().substring(0, 10);

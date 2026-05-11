@@ -14,6 +14,7 @@ import {
   TaskStatusGroup,
 } from './project.models';
 import { AuthService } from '../auth/auth.service';
+import { MenuService } from '../shares/MenuService';
 
 
 const PRIORITY_RANK: Record<string, number> = {
@@ -123,7 +124,8 @@ export class ProjectComponent {
   private readonly router = inject(Router);
   private readonly projectFs = inject(ProjectFirestoreService);
   private readonly authService = inject(AuthService);
-  
+  private readonly menuService = inject(MenuService);
+  openedMenu = this.menuService.openedMenu;
   readonly statusOptions = [...STATUS_ORDER];
   readonly priorityOptions = [...PRIORITY_ORDER];
   readonly sortOptions: { value: ProjectSortKey; label: string }[] = [
@@ -132,7 +134,7 @@ export class ProjectComponent {
     { value: 'priority', label: '優先度' },
     { value: 'updatedAt', label: '更新日' },
   ];
-  isMenuOpen: boolean = false;
+  // isMenuOpen: boolean = false;
   loadingState: 'idle' | 'dropping' | 'deleting' = 'idle';
 
 
@@ -323,6 +325,11 @@ export class ProjectComponent {
   async onDelete(): Promise<void> {
     const projectId = this.route.snapshot.paramMap.get('projectId');
     if(!projectId) return;
+    const result = confirm('プロジェクトを削除しますか？');
+    if(!result){
+      window.alert('キャンセルされました');
+      return;
+    }
     this.loadingState = 'deleting';
     try{
     await this.projectFs.deleteProject(projectId);
@@ -341,31 +348,38 @@ export class ProjectComponent {
     if(!projectId) return;
     const user = await firstValueFrom(this.authService.user$);
     if(!user) return;
+    const result = confirm('プロジェクトから脱退しますか？');
+    if(!result){
+      window.alert('キャンセルされました');
+      return;
+    }
     this.loadingState = 'dropping';
-    try{
-    await this.projectFs.leaveProject(projectId, user.uid);
-    window.alert('プロジェクトを脱退しました');
-    void this.router.navigate(['/']);
-  } catch (error) {
-    window.alert('プロジェクトの脱退に失敗しました')
-    console.error(error);
-  } finally {
-    this.loadingState = 'idle';
-  }
+      try{
+      await this.projectFs.leaveProject(projectId, user.uid);
+      window.alert('プロジェクトを脱退しました');
+      void this.router.navigate(['/']);
+      } catch (error) {
+        window.alert('プロジェクトの脱退に失敗しました')
+        console.error(error);
+      } finally {
+        this.loadingState = 'idle';
+      }
   }
 
   toggleMenu(event: MouseEvent): void {
     event.stopPropagation();
-    if(this.isMenuOpen === true) {
-      this.isMenuOpen = false;
-    } else {
-      this.isMenuOpen = true;
-    }
+    this.menuService.toggle('project');
+    // if(this.isMenuOpen === true) {
+    //   this.isMenuOpen = false;
+    // } else {
+    //   this.isMenuOpen = true;
+    // }
   }
 
   @HostListener('document:click')
   closeMenu(): void {
-    this.isMenuOpen = false;
+    this.menuService.close();
+    // this.isMenuOpen = false;
   }
 
   // ログアウト
